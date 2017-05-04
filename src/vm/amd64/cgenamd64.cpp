@@ -1206,6 +1206,11 @@ PCODE DynamicHelpers::CreateDictionaryLookupHelper(LoaderAllocator * pAllocator,
         for (WORD i = 0; i < pLookup->indirections; i++)
             indirectionsSize += (pLookup->offsets[i] >= 0x80 ? 7 : 4);
 
+        if (pLookup->indirectFirstOffset)
+        {
+            indirectionsSize += (pLookup->testForNull ? 2 : 3) + (pLookup->offsets[0] >= 0x80 ? 2 : 3) + 3;
+        }
+
         int codeSize = indirectionsSize + (pLookup->testForNull ? 30 : 4);
 
         BEGIN_DYNAMIC_HELPER_EMIT(codeSize);
@@ -1220,33 +1225,89 @@ PCODE DynamicHelpers::CreateDictionaryLookupHelper(LoaderAllocator * pAllocator,
 #endif
         }
 
+        if (pLookup->indirectFirstOffset)
+        {
+            if (pLookup->testForNull)
+            {
+                *(UINT16*)p = 0x0050; p += 1;       // push rax
+            }
+            else
+            {
+#ifdef UNIX_AMD64_ABI
+                *(UINT32*)p = 0x00f88948; p += 3;   // mov rax,rdi
+#else
+                *(UINT32*)p = 0x00c88948; p += 3;   // mov rax,rcx
+#endif
+            }
+
+            // add rax, pLookup->offsets[0]
+            if (pLookup->offsets[0] >= 0x80)
+            {
+                // 6 bytes
+                *(UINT16*)p = 0x0548; p += 2;
+                *(UINT32*)p = (UINT32)pLookup->offsets[0]; p += 4;
+            }
+            else
+            {
+                // 4 bytes
+                *(UINT32*)p = 0x00c08348; p += 3;
+                *p++ = (BYTE)pLookup->offsets[0];
+            }
+
+#ifdef UNIX_AMD64_ABI
+            // mov rdi,qword ptr [rax+0x0]
+            *(UINT32*)p = 0x00388b48; p += 3;
+#else
+            // mov rcx,qword ptr [rax+0x0]
+            *(UINT32*)p = 0x00088b48; p += 3;
+#endif
+        }
+
         for (WORD i = 0; i < pLookup->indirections; i++)
         {
+            if (i != 0 || !pLookup->indirectFirstOffset)
+            {
 #ifdef UNIX_AMD64_ABI
-            // mov rdi,qword ptr [rdi+offset]
-            if (pLookup->offsets[i] >= 0x80)
-            {
-                *(UINT32*)p = 0x00bf8b48; p += 3;
-                *(UINT32*)p = (UINT32)pLookup->offsets[i]; p += 4;
-            }
-            else
-            {
-                *(UINT32*)p = 0x007f8b48; p += 3;
-                *p++ = (BYTE)pLookup->offsets[i];
-            }
+                // mov rdi,qword ptr [rdi+offset]
+                if (pLookup->offsets[i] >= 0x80)
+                {
+                    *(UINT32*)p = 0x00bf8b48; p += 3;
+                    *(UINT32*)p = (UINT32)pLookup->offsets[i]; p += 4;
+                }
+                else
+                {
+                    *(UINT32*)p = 0x007f8b48; p += 3;
+                    *p++ = (BYTE)pLookup->offsets[i];
+                }
 #else
-            // mov rcx,qword ptr [rcx+offset]
-            if (pLookup->offsets[i] >= 0x80)
-            {
-                *(UINT32*)p = 0x00898b48; p += 3;
-                *(UINT32*)p = (UINT32)pLookup->offsets[i]; p += 4;
-            }
-            else
-            {
-                *(UINT32*)p = 0x00498b48; p += 3;
-                *p++ = (BYTE)pLookup->offsets[i];
-            }
+                // mov rcx,qword ptr [rcx+offset]
+                if (pLookup->offsets[i] >= 0x80)
+                {
+                    *(UINT32*)p = 0x00898b48; p += 3;
+                    *(UINT32*)p = (UINT32)pLookup->offsets[i]; p += 4;
+                }
+                else
+                {
+                    *(UINT32*)p = 0x00498b48; p += 3;
+                    *p++ = (BYTE)pLookup->offsets[i];
+                }
 #endif
+            }
+
+            if (i == 0 && pLookup->indirectFirstOffset)
+            {
+#ifdef UNIX_AMD64_ABI
+                *(UINT32*)p = 0x00c70148; p += 3; // add rdi, rax
+#else
+                *(UINT32*)p = 0x00c10148; p += 3; // add rcx, rax
+#endif
+
+                if (pLookup->testForNull)
+                {
+                    // pop rax
+                    *p++ = 0x58;
+                }
+            }
         }
 
         // No null test required

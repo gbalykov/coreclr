@@ -24,8 +24,8 @@ class MethodImpl
     friend class NativeImageDumper;
 #endif
 
-    PTR_DWORD            pdwSlots;       // Maintains the slots in sorted order, the first entry is the size
-    DPTR(PTR_MethodDesc) pImplementedMD;
+    RelativePointer<PTR_DWORD>            pdwSlots;       // Maintains the slots in sorted order, the first entry is the size
+    RelativePointer<DPTR( RelativePointer<PTR_MethodDesc> )> pImplementedMD;
 
 public:
 
@@ -51,16 +51,30 @@ public:
     };
 
     ///////////////////////////////////////////////////////////////////////////////////////
-    inline MethodDesc** GetImplementedMDs()
+    inline RelativePointer<MethodDesc*> * GetImplementedMDs()
     {
         CONTRACTL {
             NOTHROW;
             GC_NOTRIGGER;
             PRECONDITION(CheckPointer(this));
         } CONTRACTL_END;
-        return pImplementedMD;
+        return pImplementedMD.GetValueMaybeNull((TADDR)this);
     }
 #endif // !DACCESS_COMPILE
+
+    // In DAC builds this function is meant to be called only for structures, which are not part of other structures
+    inline DPTR(RelativePointer<PTR_MethodDesc>) GetImpMDs()
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        return pImplementedMD.GetValueMaybeNull(dac_cast<TADDR>(this) + offsetof(MethodImpl, pImplementedMD));
+    }
+
+    // In DAC builds this function is meant to be called only for structures, which are not part of other structures
+    inline DPTR(RelativePointer<PTR_MethodDesc>) GetImpMDsNonNull()
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        return pImplementedMD.GetValue(dac_cast<TADDR>(this) + offsetof(MethodImpl, pImplementedMD));
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////
     inline DWORD GetSize()
@@ -71,10 +85,10 @@ public:
             PRECONDITION(CheckPointer(this));
         } CONTRACTL_END;
 
-        if(pdwSlots == NULL)
+        if(GetSlotsRaw() == NULL)
             return 0;
         else
-            return *pdwSlots;
+            return *GetSlotsRawNonNull();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -87,10 +101,24 @@ public:
             SUPPORTS_DAC;
         } CONTRACTL_END;
 
-        if(pdwSlots == NULL)
+        if(GetSlotsRaw() == NULL)
             return NULL;
         else
-            return pdwSlots + 1;
+            return GetSlotsRawNonNull() + 1;
+    }
+
+    // In DAC builds this function is meant to be called only for structures, which are not part of other structures
+    inline PTR_DWORD GetSlotsRaw()
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        return pdwSlots.GetValueMaybeNull(dac_cast<TADDR>(this) + offsetof(MethodImpl, pdwSlots));
+    }
+
+    // In DAC builds this function is meant to be called only for structures, which are not part of other structures
+    inline PTR_DWORD GetSlotsRawNonNull()
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        return pdwSlots.GetValue(dac_cast<TADDR>(this) + offsetof(MethodImpl, pdwSlots));
     }
 
 #ifndef DACCESS_COMPILE 
@@ -99,7 +127,7 @@ public:
     void SetSize(LoaderHeap *pHeap, AllocMemTracker *pamTracker, DWORD size);
 
     ///////////////////////////////////////////////////////////////////////////////////////
-    void SetData(DWORD* slots, MethodDesc** md);
+    void SetData(DWORD* slots, RelativePointer<MethodDesc*> * md);
 
 #endif // !DACCESS_COMPILE
 

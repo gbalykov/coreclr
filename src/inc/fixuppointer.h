@@ -137,9 +137,7 @@ public:
         LIMITED_METHOD_CONTRACT;
         SetValueMaybeNull((TADDR)this, addr);
     }
-#endif
 
-#ifndef DACCESS_COMPILE
     void BitwiseCopyTo(RelativePointer<PTR_TYPE> &dest) const
     {
         dest.m_delta = m_delta;
@@ -350,12 +348,12 @@ public:
         LIMITED_METHOD_CONTRACT;
         SetValueMaybeNull((TADDR)this, addr);
     }
-#endif
+#endif // DACCESS_COMPILE
 
     // Returns the pointer to the indirection cell.
     PTR_TYPE * GetValuePtr(TADDR base) const
     {
-        LIMITED_METHOD_CONTRACT;
+        LIMITED_METHOD_DAC_CONTRACT;
         TADDR addr = base + m_delta;
         _ASSERTE((addr & FIXUP_POINTER_INDIRECTION) != 0);
         return dac_cast<DPTR(PTR_TYPE)>(addr - FIXUP_POINTER_INDIRECTION);

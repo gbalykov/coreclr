@@ -2160,6 +2160,12 @@ PCODE DynamicHelpers::CreateDictionaryLookupHelper(LoaderAllocator * pAllocator,
             indirectionsDataSize += (pLookup->offsets[i] > 32760 ? 4 : 0); // 4 bytes for storing indirection offset values
         }
 
+        if (pLookup->indirectFirstOffset)
+        {
+            indirectionsCodeSize += (pLookup->testForNull ? 8 : 0) + (pLookup->offsets[0] > 4096 ? 8 : 4) + 4;
+            indirectionsDataSize += (pLookup->offsets[0] > 4096 ? 4 : 0);
+        }
+
         int codeSize = indirectionsCodeSize;
         if(pLookup->testForNull)
         {
@@ -2185,9 +2191,40 @@ PCODE DynamicHelpers::CreateDictionaryLookupHelper(LoaderAllocator * pAllocator,
             *(DWORD*)p = 0x91000009; 
             p += 4;
         }
-        
+
         // moving offset value wrt PC. Currently points to first indirection offset data. 
         uint dataOffset = codeSize - indirectionsDataSize - (pLookup->testForNull ? 4 : 0);
+
+        if (pLookup->indirectFirstOffset)
+        {
+            if (pLookup->testForNull)
+            {
+                // str x9, [sp, #-0x10]!
+                *(DWORD*)p = 0xf81f0fe9;
+                p += 4;
+            }
+
+            if(pLookup->offsets[0] > 4096)
+            {
+                // ldr w10, [PC, #dataOffset]
+                *(DWORD*)p = 0x1800000a | ((dataOffset>>2)<<5);
+                p += 4;
+
+                // add x9, x0, x10
+                *(DWORD*)p = 0x8b0a0009;
+                p += 4;
+
+                // move to next indirection offset data
+                dataOffset = dataOffset - 8 + 4; // subtract 8 as we have moved PC by 8 and add 4 as next data is at 4 bytes from previous data
+            }
+            else
+            {
+                // add x9, x9, pLookup->offsets[0]
+                *(DWORD*)p = 0x91000129 | ( ((UINT32)pLookup->offsets[0]) <<10 );
+                p += 4;
+            }
+        }
+
         for (WORD i = 0; i < pLookup->indirections; i++)
         {
             if(pLookup->offsets[i] > 32760)
@@ -2211,6 +2248,20 @@ PCODE DynamicHelpers::CreateDictionaryLookupHelper(LoaderAllocator * pAllocator,
                 *(DWORD*)p = 0xf9400000 | ( ((UINT32)pLookup->offsets[i]>>3) <<10 );
                 p += 4;
                 dataOffset -= 4; // subtract 4 as we have moved PC by 4
+            }
+
+            if (i == 0 && pLookup->indirectFirstOffset)
+            {
+                // add x0, x0, x9
+                *(DWORD*)p = 0x8b090000;
+                p += 4;
+
+                if (pLookup->testForNull)
+                {
+                    // ldr x9, [sp], 0x10
+                    *(DWORD*)p = 0xf84107e9;
+                    p += 4;
+                }
             }
         }
         
@@ -2240,6 +2291,15 @@ PCODE DynamicHelpers::CreateDictionaryLookupHelper(LoaderAllocator * pAllocator,
         }     
         
         // datalabel:
+        if (pLookup->indirectFirstOffset)
+        {
+            if(pLookup->offsets[0] > 4096)
+            {
+                *(UINT32*)p = (UINT32)pLookup->offsets[0];
+                p += 4;
+            }
+        }
+
         for (WORD i = 0; i < pLookup->indirections; i++)
         {
             if(pLookup->offsets[i] > 32760)
