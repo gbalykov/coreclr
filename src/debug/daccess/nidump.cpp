@@ -7787,20 +7787,20 @@ void NativeImageDumper::DumpMethodDesc( PTR_MethodDesc md, PTR_Module module )
                                      MethodImpl, METHODDESCS);
 
         }
-        _ASSERTE(impl->pImplementedMD == NULL
-                 || isInRange(PTR_TO_TADDR(impl->pImplementedMD)));
-        if ((impl->pImplementedMD != NULL) && 
-            isInRange(PTR_TO_TADDR(impl->pImplementedMD)))
+        _ASSERTE(impl->GetImplementedMDs() == NULL
+                 || isInRange(PTR_TO_TADDR(impl->GetImplementedMDs())));
+        if ((impl->GetImplementedMDs() != NULL) &&
+            isInRange(PTR_TO_TADDR(impl->GetImplementedMDsNonNull())))
         {
             DisplayWriteFieldAddress( pImplementedMD,
-                                      DataPtrToDisplay(dac_cast<TADDR>(impl->pImplementedMD)),
-                                      numSlots * sizeof(MethodDesc*),
+                                      DataPtrToDisplay(dac_cast<TADDR>(impl->GetImplementedMDsNonNull())),
+                                      numSlots * sizeof(RelativePointer <MethodDesc*>),
                                       MethodImpl, METHODDESCS );
         }
         else
         {
             DisplayWriteFieldPointer( pImplementedMD,
-                                      DataPtrToDisplay(dac_cast<TADDR>(impl->pImplementedMD)),
+                                      DataPtrToDisplay(dac_cast<TADDR>(impl->GetImplementedMDs())),
                                       MethodImpl, METHODDESCS );
         }
         DisplayEndVStructure( METHODDESCS );
@@ -7810,19 +7810,19 @@ void NativeImageDumper::DumpMethodDesc( PTR_MethodDesc md, PTR_Module module )
         DisplayStartVStructure( "StoredSigMethodDesc", METHODDESCS );
         PTR_StoredSigMethodDesc ssmd(md); 
         //display signature information.
-        if( isInRange(ssmd->m_pSig) )
+        if( isInRange(ssmd->GetSigRVA()) )
         {
-            DisplayWriteFieldAddress(m_pSig, DataPtrToDisplay(ssmd->m_pSig),
+            DisplayWriteFieldAddress(m_pSig, DataPtrToDisplay(ssmd->GetSigRVA()),
                                      ssmd->m_cSig, StoredSigMethodDesc,
                                      METHODDESCS);
         }
         else
         {
-            DisplayWriteFieldPointer(m_pSig, DataPtrToDisplay(ssmd->m_pSig),
+            DisplayWriteFieldPointer(m_pSig, DataPtrToDisplay(ssmd->GetSigRVA()),
                                      StoredSigMethodDesc, METHODDESCS);
 
         }
-        CoverageRead(TO_TADDR(ssmd->m_pSig), ssmd->m_cSig);
+        CoverageRead(TO_TADDR(ssmd->GetSigRVA()), ssmd->m_cSig);
         DisplayWriteFieldInt( m_cSig, ssmd->m_cSig,
                               StoredSigMethodDesc, METHODDESCS );
 #ifdef _WIN64
@@ -7838,10 +7838,10 @@ void NativeImageDumper::DumpMethodDesc( PTR_MethodDesc md, PTR_Module module )
     {
         PTR_DynamicMethodDesc dmd(md);
         DisplayStartVStructure( "DynamicMethodDesc", METHODDESCS );
-        WriteFieldStr( m_pszMethodName, PTR_BYTE(dmd->m_pszMethodName),
+        WriteFieldStr( m_pszMethodName, PTR_BYTE(dmd->GetMethodName()),
                        DynamicMethodDesc, METHODDESCS );
         if( !CHECK_OPT(METHODDESCS) )
-            CoverageReadString( PTR_TO_TADDR(dmd->m_pszMethodName) ); 
+            CoverageReadString( PTR_TO_TADDR(dmd->GetMethodName()) );
         DisplayWriteFieldPointer( m_pResolver,
                                   DPtrToPreferredAddr(dmd->m_pResolver),
                                   DynamicMethodDesc, METHODDESCS );
@@ -7885,10 +7885,10 @@ void NativeImageDumper::DumpMethodDesc( PTR_MethodDesc md, PTR_Module module )
                                      METHODDESCS );
 
         WriteFieldStr( m_pszEntrypointName,
-                       PTR_BYTE(TO_TADDR(nd->m_pszEntrypointName)),
+                       PTR_BYTE(dac_cast<TADDR>(ndmd->GetEntrypointName())),
                        NDirectMethodDesc::temp1, METHODDESCS );
         if( !CHECK_OPT(METHODDESCS) )
-            CoverageReadString(TO_TADDR(nd->m_pszEntrypointName));
+            CoverageReadString(dac_cast<TADDR>(ndmd->GetEntrypointName()));
         if (md->IsQCall())
         {
             DisplayWriteFieldInt( m_dwECallID,
@@ -7899,13 +7899,13 @@ void NativeImageDumper::DumpMethodDesc( PTR_MethodDesc md, PTR_Module module )
         else
         {
             WriteFieldStr( m_pszLibName,
-                           PTR_BYTE(TO_TADDR(nd->m_pszLibName)),
+                           PTR_BYTE(dac_cast<TADDR>(ndmd->GetLibNameNoQCall())),
                            NDirectMethodDesc::temp1, METHODDESCS );
         }
         if( !CHECK_OPT(METHODDESCS) )
-            CoverageReadString( TO_TADDR(nd->m_pszLibName) );
+            CoverageReadString( dac_cast<TADDR>(ndmd->GetLibNameNoQCall()) );
 
-        PTR_NDirectWriteableData wnd( nd->m_pWriteableData );
+        PTR_NDirectWriteableData wnd( ndmd->GetWriteableData() );
         DisplayStartStructureWithOffset( m_pWriteableData,
                                          DPtrToPreferredAddr(wnd),
                                          sizeof(*wnd),
@@ -7919,7 +7919,7 @@ void NativeImageDumper::DumpMethodDesc( PTR_MethodDesc md, PTR_Module module )
 
 
 #ifdef HAS_NDIRECT_IMPORT_PRECODE
-        PTR_NDirectImportThunkGlue glue(nd->m_pImportThunkGlue);
+        PTR_NDirectImportThunkGlue glue(ndmd->GetNDirectImportThunkGlueImportPrecode());
 #else
         PTR_NDirectImportThunkGlue glue(PTR_HOST_MEMBER_TADDR(NDirectMethodDesc::temp1, nd, m_ImportThunkGlue));
 #endif
@@ -8023,7 +8023,7 @@ void NativeImageDumper::DumpMethodDesc( PTR_MethodDesc md, PTR_Module module )
             & InstantiatedMethodDesc::KindMask;
         if( kind == InstantiatedMethodDesc::SharedMethodInstantiation )
         {
-            PTR_DictionaryLayout layout(TO_TADDR(imd->m_pDictLayout));
+            PTR_DictionaryLayout layout(dac_cast<TADDR>(imd->GetDictionaryLayout()));
             IF_OPT(METHODDESCS)
             {
                 WriteFieldDictionaryLayout( "m_pDictLayout",
@@ -8047,7 +8047,7 @@ void NativeImageDumper::DumpMethodDesc( PTR_MethodDesc md, PTR_Module module )
         else if( kind ==
                  InstantiatedMethodDesc::WrapperStubWithInstantiations )
         {
-            PTR_MethodDesc wimd(imd->m_pWrappedMethodDesc.GetValue());
+            PTR_MethodDesc wimd(imd->GetMethodDesc());
             if( wimd == NULL || !DoWriteFieldAsFixup( "m_pWrappedMethodDesc",
                                                       offsetof(InstantiatedMethodDesc, m_pWrappedMethodDesc),
                                                       fieldsize(InstantiatedMethodDesc, m_pWrappedMethodDesc),
@@ -8059,14 +8059,14 @@ void NativeImageDumper::DumpMethodDesc( PTR_MethodDesc md, PTR_Module module )
         }
         else
         {
-            _ASSERTE(imd->m_pDictLayout == NULL);
+            _ASSERTE(imd->GetDictionaryLayout() == NULL);
             DisplayWriteFieldPointer( m_pDictLayout, NULL,
                                       InstantiatedMethodDesc,
                                       METHODDESCS );
         }
         //now handle the contents of the m_pMethInst/m_pPerInstInfo union.
         unsigned numSlots = imd->m_wNumGenericArgs;
-        PTR_Dictionary inst(imd->m_pPerInstInfo);
+        PTR_Dictionary inst(imd->IMD_GetMethodDictionary());
         unsigned dictSize;
         if( kind == InstantiatedMethodDesc::SharedMethodInstantiation )
         {
@@ -8075,7 +8075,7 @@ void NativeImageDumper::DumpMethodDesc( PTR_MethodDesc md, PTR_Module module )
         else if( kind == InstantiatedMethodDesc::WrapperStubWithInstantiations )
         {
             PTR_InstantiatedMethodDesc wrapped =
-                PTR_InstantiatedMethodDesc(imd->m_pWrappedMethodDesc.GetValue());
+                PTR_InstantiatedMethodDesc(imd->GetMethodDesc());
             if( CORCOMPILE_IS_POINTER_TAGGED(PTR_TO_TADDR(wrapped)) )
             {
                 /* XXX Mon 03/27/2006
@@ -8089,7 +8089,7 @@ void NativeImageDumper::DumpMethodDesc( PTR_MethodDesc md, PTR_Module module )
             else
             {
                 PTR_DictionaryLayout layout(wrapped->IsSharedByGenericMethodInstantiations()
-                                            ? TO_TADDR(wrapped->m_pDictLayout) : NULL );
+                                            ? dac_cast<TADDR>(wrapped->GetDictionaryLayout()) : NULL );
                 dictSize = DictionaryLayout::GetFirstDictionaryBucketSize(imd->GetNumGenericMethodArgs(), 
                                                                           layout);
             }

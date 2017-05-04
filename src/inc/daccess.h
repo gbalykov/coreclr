@@ -2234,6 +2234,8 @@ public: name(int dummy) : base(dummy) {}
 
 #endif // #ifdef DACCESS_COMPILE
 
+#define DPTR_FOR_POINTER(ptr) (DPTR(std::remove_pointer<decltype(ptr)>::type)) (ptr)
+
 //----------------------------------------------------------------------------
 // dac_cast
 // Casting utility, to be used for casting one class pointer type to another.

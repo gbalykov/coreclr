@@ -249,6 +249,7 @@ typedef uintptr_t TADDR;
 #define PTR_TO_TADDR(ptr) ((TADDR)(ptr))
 
 #define DPTR(type) type*
+#define DPTR_FOR_POINTER(ptr) (DPTR(std::remove_pointer<decltype(ptr)>::type)) (ptr)
 #define SPTR(type) type*
 
 #define GVAL_DECL(type, var) \

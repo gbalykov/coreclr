@@ -1987,6 +1987,11 @@ PCODE DynamicHelpers::CreateDictionaryLookupHelper(LoaderAllocator * pAllocator,
         for (WORD i = 0; i < pLookup->indirections; i++)
             indirectionsSize += (pLookup->offsets[i] >= 0x80 ? 6 : 3);
 
+        if (pLookup->indirectFirstOffset)
+        {
+            indirectionsSize += (pLookup->offsets[0] >= 0x80 ? 1 : 2) + 4;
+        }
+
         int codeSize = indirectionsSize + (pLookup->testForNull ? 21 : 3);
 
         BEGIN_DYNAMIC_HELPER_EMIT(codeSize);
@@ -1998,18 +2003,61 @@ PCODE DynamicHelpers::CreateDictionaryLookupHelper(LoaderAllocator * pAllocator,
             *(UINT16*)p = 0xc889; p += 2;
         }
 
-        for (WORD i = 0; i < pLookup->indirections; i++)
+        if (pLookup->indirectFirstOffset)
         {
-            // mov ecx,qword ptr [ecx+offset]
-            if (pLookup->offsets[i] >= 0x80)
+            if (pLookup->testForNull)
             {
-                *(UINT16*)p = 0x898b; p += 2;
-                *(UINT32*)p = (UINT32)pLookup->offsets[i]; p += 4;
+                *(UINT16*)p = 0x0050; p += 1;       // push eax
             }
             else
             {
-                *(UINT16*)p = 0x498b; p += 2;
-                *p++ = (BYTE)pLookup->offsets[i];
+                *(UINT16*)p = 0xc889; p += 2;       // mov eax,ecx
+            }
+
+            // add eax, pLookup->offsets[0]
+            if (pLookup->offsets[0] >= 0x80)
+            {
+                // 5 bytes
+                *(UINT16*)p = 0x0005; p += 1;
+                *(UINT32*)p = (UINT32)pLookup->offsets[0]; p += 4;
+            }
+            else
+            {
+                // 3 bytes
+                *(UINT16*)p = 0xc083; p += 2;
+                *p++ = (BYTE)pLookup->offsets[0];
+            }
+
+            // mov ecx,dword ptr [eax+0x0]
+            *(UINT16*)p = 0x088b; p += 2;
+        }
+
+        for (WORD i = 0; i < pLookup->indirections; i++)
+        {
+            if (i != 0 || !pLookup->indirectFirstOffset)
+            {
+                // mov ecx,dword ptr [ecx+offset]
+                if (pLookup->offsets[i] >= 0x80)
+                {
+                    *(UINT16*)p = 0x898b; p += 2;
+                    *(UINT32*)p = (UINT32)pLookup->offsets[i]; p += 4;
+                }
+                else
+                {
+                    *(UINT16*)p = 0x498b; p += 2;
+                    *p++ = (BYTE)pLookup->offsets[i];
+                }
+            }
+
+            if (i == 0 && pLookup->indirectFirstOffset)
+            {
+                *(UINT16*)p = 0xc101; p += 2; // add ecx, eax
+
+                if (pLookup->testForNull)
+                {
+                    // pop eax
+                    *p++ = 0x58;
+                }
             }
         }
 
