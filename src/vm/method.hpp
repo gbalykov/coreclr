@@ -2209,7 +2209,7 @@ class StoredSigMethodDesc : public MethodDesc
     // Put the sig RVA in here - this allows us to avoid
     // touching the method desc table when mscorlib is prejitted.
 
-    TADDR           m_pSig;
+    RelativePointer<TADDR>           m_pSig;
     DWORD           m_cSig;
 #ifdef _WIN64 
     // m_dwExtendedFlags is not used by StoredSigMethodDesc itself.
@@ -2221,7 +2221,7 @@ class StoredSigMethodDesc : public MethodDesc
     bool HasStoredMethodSig(void)
     {
         LIMITED_METHOD_DAC_CONTRACT;
-        return m_pSig != 0;
+        return m_pSig.GetValueMaybeNull() != 0;
     }
     PCCOR_SIGNATURE GetStoredMethodSig(DWORD* sigLen = NULL)
     {
@@ -2232,16 +2232,16 @@ class StoredSigMethodDesc : public MethodDesc
         }
 #ifdef DACCESS_COMPILE 
         return (PCCOR_SIGNATURE)
-            DacInstantiateTypeByAddress(m_pSig, m_cSig, true);
+            DacInstantiateTypeByAddress(m_pSig.GetValueMaybeNull(), m_cSig, true);
 #else // !DACCESS_COMPILE
         g_IBCLogger.LogNDirectCodeAccess(this);
-        return (PCCOR_SIGNATURE)m_pSig;
+        return (PCCOR_SIGNATURE) m_pSig.GetValueMaybeNull();
 #endif // !DACCESS_COMPILE
     }
     void SetStoredMethodSig(PCCOR_SIGNATURE sig, DWORD sigBytes)
     {
 #ifndef DACCESS_COMPILE 
-        m_pSig = (TADDR)sig;
+        m_pSig.SetValueMaybeNull((TADDR)sig);
         m_cSig = sigBytes;
 #endif // !DACCESS_COMPILE
     }
@@ -2301,7 +2301,7 @@ class DynamicMethodDesc : public StoredSigMethodDesc
 #endif
 
 protected:
-    PTR_CUTF8           m_pszMethodName;
+    RelativePointer<PTR_CUTF8>           m_pszMethodName;
     PTR_DynamicResolver m_pResolver;
 
 #ifndef _WIN64
@@ -2342,7 +2342,7 @@ public:
     inline PTR_LCGMethodResolver  GetLCGMethodResolver();
     inline PTR_ILStubResolver     GetILStubResolver();
 
-    PTR_CUTF8 GetMethodName() { LIMITED_METHOD_DAC_CONTRACT; return m_pszMethodName; }
+    PTR_CUTF8 GetMethodName() { LIMITED_METHOD_DAC_CONTRACT; return m_pszMethodName.GetValueMaybeNull(); }
 
     WORD GetAttrs()
     {
@@ -2567,19 +2567,19 @@ public:
         LPVOID      m_pNativeNDirectTarget;
             
         // Information about the entrypoint
-        LPCUTF8     m_pszEntrypointName;
+        RelativePointer< DPTR(const CHAR) >     m_pszEntrypointName;
 
         union
         {
-            LPCUTF8     m_pszLibName;
+            RelativePointer< DPTR(const CHAR) >     m_pszLibName;
             DWORD       m_dwECallID;    // ECallID for QCalls
         };
 
         // The writeable part of the methoddesc.
-        PTR_NDirectWriteableData    m_pWriteableData;
+        RelativePointer<PTR_NDirectWriteableData>    m_pWriteableData;
 
 #ifdef HAS_NDIRECT_IMPORT_PRECODE
-        PTR_NDirectImportThunkGlue  m_pImportThunkGlue;        
+        RelativePointer<PTR_NDirectImportThunkGlue> m_pImportThunkGlue;
 #else // HAS_NDIRECT_IMPORT_PRECODE
         NDirectImportThunkGlue      m_ImportThunkGlue;
 #endif // HAS_NDIRECT_IMPORT_PRECODE
@@ -2706,14 +2706,14 @@ public:
     {
         LIMITED_METHOD_CONTRACT;
 
-        return IsQCall() ? "QCall" : ndirect.m_pszLibName;
+        return IsQCall() ? "QCall" : ndirect.m_pszLibName.GetValueMaybeNull();
     }
 
     LPCUTF8 GetEntrypointName() const
     {
         LIMITED_METHOD_CONTRACT;
 
-        return ndirect.m_pszEntrypointName;
+        return ndirect.m_pszEntrypointName.GetValueMaybeNull();
     }
 
     BOOL IsVarArgs() const
@@ -2793,7 +2793,7 @@ public:
     {
         LIMITED_METHOD_CONTRACT;
 
-        return ndirect.m_pWriteableData;
+        return ndirect.m_pWriteableData.GetValue();
     }
 
     NDirectImportThunkGlue* GetNDirectImportThunkGlue()
@@ -2801,7 +2801,7 @@ public:
         LIMITED_METHOD_CONTRACT;
 
 #ifdef HAS_NDIRECT_IMPORT_PRECODE
-        return ndirect.m_pImportThunkGlue;
+        return ndirect.m_pImportThunkGlue.GetValue();
 #else
         return &ndirect.m_ImportThunkGlue;
 #endif
@@ -3196,7 +3196,7 @@ public:
         if (IMD_IsGenericMethodDefinition())
             return TRUE;
         else
-            return m_pPerInstInfo != NULL;
+            return m_pPerInstInfo.GetValueMaybeNull() != NULL;
     }
 
     // All varieties of InstantiatedMethodDesc's support this method.
@@ -3204,13 +3204,13 @@ public:
     {
         LIMITED_METHOD_DAC_CONTRACT;
 
-        return Instantiation(m_pPerInstInfo->GetInstantiation(), m_wNumGenericArgs);
+        return Instantiation(m_pPerInstInfo.GetValueMaybeNull()->GetInstantiation(), m_wNumGenericArgs);
     }
 
     PTR_Dictionary IMD_GetMethodDictionary()
     {
         LIMITED_METHOD_DAC_CONTRACT;
-        return m_pPerInstInfo;
+        return m_pPerInstInfo.GetValueMaybeNull();
     }
 
     BOOL IMD_IsGenericMethodDefinition()
@@ -3282,10 +3282,10 @@ public:
     {
         WRAPPER_NO_CONTRACT;
         if (IMD_IsWrapperStubWithInstantiations() && IMD_HasMethodInstantiation())
-            return IMD_GetWrappedMethodDesc()->AsInstantiatedMethodDesc()->m_pDictLayout;
+            return IMD_GetWrappedMethodDesc()->AsInstantiatedMethodDesc()->m_pDictLayout.GetValueMaybeNull();
         else
         if (IMD_IsSharedByGenericMethodInstantiations())
-            return m_pDictLayout;
+            return m_pDictLayout.GetValueMaybeNull();
         else
             return NULL;
     }
@@ -3345,9 +3345,9 @@ private:
 
     friend class MethodDesc; // this fields are currently accessed by MethodDesc::Save/Restore etc.
     union {
-        DictionaryLayout * m_pDictLayout; //SharedMethodInstantiation
+        RelativePointer<PTR_DictionaryLayout> m_pDictLayout; //SharedMethodInstantiation
 
-        FixupPointer<PTR_MethodDesc> m_pWrappedMethodDesc; // For WrapperStubWithInstantiations
+        RelativeFixupPointer<PTR_MethodDesc> m_pWrappedMethodDesc; // For WrapperStubWithInstantiations
     };
 
 public: // <TODO>make private: JITinterface.cpp accesses through this </TODO>
@@ -3360,7 +3360,7 @@ public: // <TODO>make private: JITinterface.cpp accesses through this </TODO>
         //
         // For generic method definitions that are not the typical method definition (e.g. C<int>.m<U>)
         // this field is null; to obtain the instantiation use LoadMethodInstantiation
-    PTR_Dictionary m_pPerInstInfo;  //SHARED
+    RelativePointer<PTR_Dictionary> m_pPerInstInfo;  //SHARED
 
 private:
     WORD          m_wFlags2;

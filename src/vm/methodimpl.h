@@ -24,8 +24,8 @@ class MethodImpl
     friend class NativeImageDumper;
 #endif
 
-    PTR_DWORD            pdwSlots;       // Maintains the slots in sorted order, the first entry is the size
-    DPTR(PTR_MethodDesc) pImplementedMD;
+    RelativePointer<PTR_DWORD>            pdwSlots;       // Maintains the slots in sorted order, the first entry is the size
+    RelativePointer<DPTR( RelativePointer<PTR_MethodDesc> )> pImplementedMD;
 
 public:
 
@@ -51,14 +51,14 @@ public:
     };
 
     ///////////////////////////////////////////////////////////////////////////////////////
-    inline MethodDesc** GetImplementedMDs()
+    inline RelativePointer<MethodDesc*> * GetImplementedMDs()
     {
         CONTRACTL {
             NOTHROW;
             GC_NOTRIGGER;
             PRECONDITION(CheckPointer(this));
         } CONTRACTL_END;
-        return pImplementedMD;
+        return pImplementedMD.GetValueMaybeNull();
     }
 #endif // !DACCESS_COMPILE
 
@@ -71,10 +71,10 @@ public:
             PRECONDITION(CheckPointer(this));
         } CONTRACTL_END;
 
-        if(pdwSlots == NULL)
+        if(pdwSlots.GetValueMaybeNull() == NULL)
             return 0;
         else
-            return *pdwSlots;
+            return *pdwSlots.GetValue();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -87,10 +87,10 @@ public:
             SUPPORTS_DAC;
         } CONTRACTL_END;
 
-        if(pdwSlots == NULL)
+        if(pdwSlots.GetValueMaybeNull() == NULL)
             return NULL;
         else
-            return pdwSlots + 1;
+            return pdwSlots.GetValue() + 1;
     }
 
 #ifndef DACCESS_COMPILE 
@@ -99,7 +99,7 @@ public:
     void SetSize(LoaderHeap *pHeap, AllocMemTracker *pamTracker, DWORD size);
 
     ///////////////////////////////////////////////////////////////////////////////////////
-    void SetData(DWORD* slots, MethodDesc** md);
+    void SetData(DWORD* slots, RelativePointer<MethodDesc*> * md);
 
 #endif // !DACCESS_COMPILE
 
