@@ -46,6 +46,20 @@ public:
         return dac_cast<PTR_TYPE>(base + m_delta);
     }
 
+    // Returns value of the encoded pointer with DPTR struct base. Assumes that the pointer is not NULL.
+    template<typename TYPE_T>
+    PTR_TYPE GetValueWithBase(DPTR(TYPE_T) pStructBase) const
+    {
+        TYPE_T *pHostStructBase = (TYPE_T *) pStructBase;
+
+        TADDR base = dac_cast<TADDR>(pStructBase);
+        TADDR offset = ((uintptr_t) this) - ((uintptr_t) pHostStructBase);
+
+        _ASSERTE(offset < sizeof(TYPE_T));
+
+        return GetValue(base + offset);
+    }
+
 #ifndef DACCESS_COMPILE
     // Returns value of the encoded pointer. Assumes that the pointer is not NULL.
     // Does not need explicit base and thus can be used in non-DAC builds only.
@@ -77,6 +91,20 @@ public:
         return dac_cast<PTR_TYPE>(base + delta);
     }
 
+    // Returns value of the encoded pointer with DPTR struct base. The pointer can be NULL.
+    template<typename TYPE_T>
+    PTR_TYPE GetValueMaybeNullWithBase(DPTR(TYPE_T) pStructBase) const
+    {
+        TYPE_T *pHostStructBase = (TYPE_T *) pStructBase;
+
+        TADDR base = dac_cast<TADDR>(pStructBase);
+        TADDR offset = ((uintptr_t) this) - ((uintptr_t) pHostStructBase);
+
+        _ASSERTE(offset < sizeof(TYPE_T));
+
+        return GetValueMaybeNull(base + offset);
+    }
+
 #ifndef DACCESS_COMPILE
     // Returns value of the encoded pointer. The pointer can be NULL.
     // Does not need explicit base and thus can be used in non-DAC builds only.
@@ -94,6 +122,7 @@ public:
         return dac_cast<DPTR(RelativePointer<PTR_TYPE>)>(base)->GetValueMaybeNull(base);
     }
 
+#ifndef DACCESS_COMPILE
     // Set encoded value of the pointer. Assumes that the value is not NULL.
     void SetValue(TADDR base, PTR_TYPE addr)
     {
@@ -102,7 +131,6 @@ public:
         m_delta = dac_cast<TADDR>(addr) - base;
     }
 
-#ifndef DACCESS_COMPILE
     // Set encoded value of the pointer. Assumes that the value is not NULL.
     // Does not need explicit base and thus can be used in non-DAC builds only.
     FORCEINLINE void SetValue(PTR_TYPE addr)
@@ -110,7 +138,6 @@ public:
         LIMITED_METHOD_CONTRACT;
         return SetValue((TADDR)this, addr);
     }
-#endif
 
     // Static version of SetValue. It is meant to simplify access to arrays of pointers.
     FORCEINLINE static void SetValueAtPtr(TADDR base, PTR_TYPE addr)
@@ -126,7 +153,6 @@ public:
         if (addr == NULL) m_delta = NULL; else SetValue(base, addr);
     }
 
-#ifndef DACCESS_COMPILE
     // Set encoded value of the pointer. The value can be NULL.
     // Does not need explicit base and thus can be used in non-DAC builds only.
     FORCEINLINE void SetValueMaybeNull(PTR_TYPE addr)
@@ -134,7 +160,6 @@ public:
         LIMITED_METHOD_CONTRACT;
         return SetValueMaybeNull((TADDR)this, addr);
     }
-#endif
 
     // Static version of SetValueMaybeNull. It is meant to simplify access to arrays of pointers.
     FORCEINLINE static void SetValueMaybeNullAtPtr(TADDR base, PTR_TYPE addr)
@@ -142,6 +167,7 @@ public:
         LIMITED_METHOD_CONTRACT;
         dac_cast<DPTR(RelativePointer<PTR_TYPE>)>(base)->SetValueMaybeNull(base, addr);
     }
+#endif
 
 private:
 #ifndef DACCESS_COMPILE
@@ -264,6 +290,20 @@ public:
         return dac_cast<PTR_TYPE>(addr);
     }
 
+    // Returns value of the encoded pointer with DPTR struct base. Assumes that the pointer is not NULL.
+    template<typename TYPE_T>
+    PTR_TYPE GetValueWithBase(DPTR(TYPE_T) pStructBase) const
+    {
+        TYPE_T *pHostStructBase = (TYPE_T *) pStructBase;
+
+        TADDR base = dac_cast<TADDR>(pStructBase);
+        TADDR offset = ((uintptr_t) this) - ((uintptr_t) pHostStructBase);
+
+        _ASSERTE(offset < sizeof(TYPE_T));
+
+        return GetValue(base + offset);
+    }
+
 #ifndef DACCESS_COMPILE
     // Returns value of the encoded pointer. Assumes that the pointer is not NULL.
     // Does not need explicit base and thus can be used in non-DAC builds only.
@@ -299,6 +339,20 @@ public:
         return dac_cast<PTR_TYPE>(addr);
     }
 
+    // Returns value of the encoded pointer with DPTR struct base. The pointer can be NULL.
+    template<typename TYPE_T>
+    PTR_TYPE GetValueMaybeNullWithBase(DPTR(TYPE_T) pStructBase) const
+    {
+        TYPE_T *pHostStructBase = (TYPE_T *) pStructBase;
+
+        TADDR base = dac_cast<TADDR>(pStructBase);
+        TADDR offset = ((uintptr_t) this) - ((uintptr_t) pHostStructBase);
+
+        _ASSERTE(offset < sizeof(TYPE_T));
+
+        return GetValueMaybeNull(base + offset);
+    }
+
 #ifndef DACCESS_COMPILE
     // Returns value of the encoded pointer. The pointer can be NULL.
     // Does not need explicit base and thus can be used in non-DAC builds only.
@@ -316,6 +370,7 @@ public:
         return dac_cast<DPTR(RelativeFixupPointer<PTR_TYPE>)>(base)->GetValueMaybeNull(base);
     }
 
+#ifndef DACCESS_COMPILE
     // Set encoded value of the pointer. Assumes that the value is not NULL.
     void SetValue(TADDR base, PTR_TYPE addr)
     {
@@ -324,7 +379,6 @@ public:
         m_delta = dac_cast<TADDR>(addr) - base;
     }
 
-#ifndef DACCESS_COMPILE
     // Set encoded value of the pointer. Assumes that the value is not NULL.
     // Does not need explicit base and thus can be used in non-DAC builds only.
     FORCEINLINE void SetValue(PTR_TYPE addr)
@@ -332,7 +386,6 @@ public:
         LIMITED_METHOD_CONTRACT;
         return SetValue((TADDR)this, addr);
     }
-#endif
 
     // Static version of SetValue. It is meant to simplify access to arrays of pointers.
     FORCEINLINE static void SetValueAtPtr(TADDR base, PTR_TYPE addr)
@@ -348,7 +401,6 @@ public:
         if (addr == NULL) m_delta = NULL; else SetValue(base, addr);
     }
 
-#ifndef DACCESS_COMPILE
     // Set encoded value of the pointer. The value can be NULL.
     // Does not need explicit base and thus can be used in non-DAC builds only.
     FORCEINLINE void SetValueMaybeNull(PTR_TYPE addr)
@@ -356,7 +408,6 @@ public:
         LIMITED_METHOD_CONTRACT;
         return SetValueMaybeNull((TADDR)this, addr);
     }
-#endif
 
     // Static version of SetValueMaybeNull. It is meant to simplify access to arrays of pointers.
     FORCEINLINE static void SetValueMaybeNullAtPtr(TADDR base, PTR_TYPE addr)
@@ -364,11 +415,12 @@ public:
         LIMITED_METHOD_CONTRACT;
         dac_cast<DPTR(RelativeFixupPointer<PTR_TYPE>)>(base)->SetValueMaybeNull(base, addr);
     }
+#endif
 
     // Returns the pointer to the indirection cell.
     PTR_TYPE * GetValuePtr(TADDR base) const
     {
-        LIMITED_METHOD_CONTRACT;
+        LIMITED_METHOD_DAC_CONTRACT;
         TADDR addr = base + m_delta;
         _ASSERTE((addr & FIXUP_POINTER_INDIRECTION) != 0);
         return dac_cast<DPTR(PTR_TYPE)>(addr - FIXUP_POINTER_INDIRECTION);
