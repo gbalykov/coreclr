@@ -18839,29 +18839,50 @@ regMaskTP CodeGen::genCodeForCall(GenTreeCall* call, bool valUsed)
                 // stub dispatching is off or this is not a virtual call (could be a tailcall)
                 {
                     regNumber vptrReg;
+                    regNumber vptrReg1;
+                    regMaskTP vptrMask1;
                     unsigned  vtabOffsOfIndirection;
                     unsigned  vtabOffsAfterIndirection;
+                    unsigned  isRelative;
 
                     noway_assert(callType == CT_USER_FUNC);
+
+                    /* Get hold of the vtable offset (note: this might be expensive) */
+
+                    compiler->info.compCompHnd->getMethodVTableOffset(call->gtCallMethHnd,
+                                                                      &vtabOffsOfIndirection,
+                                                                      &vtabOffsAfterIndirection,
+                                                                      &isRelative);
 
                     vptrReg =
                         regSet.rsGrabReg(RBM_ALLINT); // Grab an available register to use for the CALL indirection
                     vptrMask = genRegMask(vptrReg);
 
+                    if (isRelative)
+                    {
+                        vptrReg1 = regSet.rsGrabReg(RBM_ALLINT & ~vptrMask);
+                        vptrMask1 = genRegMask(vptrReg1);
+                    }
+
                     /* The register no longer holds a live pointer value */
                     gcInfo.gcMarkRegSetNpt(vptrMask);
+
+                    if (isRelative)
+                    {
+                        gcInfo.gcMarkRegSetNpt(vptrMask1);
+                    }
 
                     // MOV vptrReg, [REG_CALL_THIS + offs]
                     getEmitter()->emitIns_R_AR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, vptrReg, genGetThisArgReg(call),
                                                VPTR_OFFS);
                     regTracker.rsTrackRegTrash(vptrReg);
 
+                    if (isRelative)
+                    {
+                        regTracker.rsTrackRegTrash(vptrReg1);
+                    }
+
                     noway_assert(vptrMask & ~call->gtCallRegUsedMask);
-
-                    /* Get hold of the vtable offset (note: this might be expensive) */
-
-                    compiler->info.compCompHnd->getMethodVTableOffset(call->gtCallMethHnd, &vtabOffsOfIndirection,
-                                                                      &vtabOffsAfterIndirection);
 
                     /* The register no longer holds a live pointer value */
                     gcInfo.gcMarkRegSetNpt(vptrMask);
@@ -18870,25 +18891,61 @@ regMaskTP CodeGen::genCodeForCall(GenTreeCall* call, bool valUsed)
 
                     if (vtabOffsOfIndirection != CORINFO_VIRTUALCALL_NO_CHUNK)
                     {
-                        // MOV vptrReg, [REG_CALL_IND_SCRATCH + vtabOffsOfIndirection]
-                        getEmitter()->emitIns_R_AR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, vptrReg, vptrReg,
-                                                   vtabOffsOfIndirection);
+                        if (isRelative)
+                        {
+                            // MOV vptrReg1, [vptrReg + vtabOffsOfIndirection]!
+                            if (vtabOffsOfIndirection > 0)
+                            {
+                              getEmitter()->emitIns_R_R_I(INS_ldr, EA_PTRSIZE, vptrReg1, vptrReg, vtabOffsOfIndirection,
+                                                          INS_FLAGS_DONT_CARE, INS_OPTS_LDST_PRE_INC);
+                            }
+                            else
+                            {
+                              getEmitter()->emitIns_R_R_I(INS_ldr, EA_PTRSIZE, vptrReg1, vptrReg, vtabOffsOfIndirection,
+                                                          INS_FLAGS_DONT_CARE, INS_OPTS_LDST_PRE_DEC);
+                            }
+
+                            // ADD vptrReg, vtabOffsAfterIndirection
+                            getEmitter()->emitIns_R_I(INS_add, EA_PTRSIZE, vptrReg, vtabOffsAfterIndirection);
+                        }
+                        else
+                        {
+                            // MOV vptrReg, [REG_CALL_IND_SCRATCH + vtabOffsOfIndirection]
+                            getEmitter()->emitIns_R_AR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, vptrReg, vptrReg,
+                                                       vtabOffsOfIndirection);
+                        }
                     }
 
                     /* Call through the appropriate vtable slot */
 
                     if (fTailCall)
                     {
-                        /* Load the function address: "[vptrReg+vtabOffs] -> reg_intret" */
-
-                        getEmitter()->emitIns_R_AR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, REG_TAILCALL_ADDR, vptrReg,
-                                                   vtabOffsAfterIndirection);
+                        if (isRelative)
+                        {
+                            /* Load the function address: "[vptrReg + vptrReg1] -> reg_intret" */
+                            getEmitter()->emitIns_R_ARR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, REG_TAILCALL_ADDR, vptrReg,
+                                                         vptrReg1, 0);
+                        }
+                        else
+                        {
+                            /* Load the function address: "[vptrReg+vtabOffs] -> reg_intret" */
+                            getEmitter()->emitIns_R_AR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, REG_TAILCALL_ADDR, vptrReg,
+                                                       vtabOffsAfterIndirection);
+                        }
                     }
                     else
                     {
 #if CPU_LOAD_STORE_ARCH
-                        getEmitter()->emitIns_R_AR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, vptrReg, vptrReg,
-                                                   vtabOffsAfterIndirection);
+                        if (isRelative)
+                        {
+                            getEmitter()->emitIns_R_ARR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, vptrReg, vptrReg,
+                                                       vptrReg1, 0);
+                        }
+                        else
+                        {
+                            getEmitter()->emitIns_R_AR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, vptrReg, vptrReg,
+                                                       vtabOffsAfterIndirection);
+                        }
 
                         getEmitter()->emitIns_Call(emitter::EC_INDIR_R, call->gtCallMethHnd,
                                                    INDEBUG_LDISASM_COMMA(sigInfo) NULL, // addr
@@ -18896,6 +18953,7 @@ regMaskTP CodeGen::genCodeForCall(GenTreeCall* call, bool valUsed)
                                                    gcInfo.gcRegByrefSetCur, ilOffset,
                                                    vptrReg); // ireg
 #else
+                        _ASSERTE(!isRelative);
                         getEmitter()->emitIns_Call(emitter::EC_FUNC_VIRTUAL, call->gtCallMethHnd,
                                                    INDEBUG_LDISASM_COMMA(sigInfo) NULL, // addr
                                                    args, retSize, gcInfo.gcVarPtrSetCur, gcInfo.gcRegGCrefSetCur,

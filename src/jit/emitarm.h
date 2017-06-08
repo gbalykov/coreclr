@@ -189,7 +189,7 @@ inline static bool insOptsNone(insOpts opt)
 
 inline static bool insOptAnyInc(insOpts opt)
 {
-    return (opt == INS_OPTS_LDST_PRE_DEC) || (opt == INS_OPTS_LDST_POST_INC);
+    return (opt == INS_OPTS_LDST_PRE_DEC) || (opt == INS_OPTS_LDST_POST_INC) || (opt == INS_OPTS_LDST_PRE_INC);
 }
 
 inline static bool insOptsPreDec(insOpts opt)
@@ -200,6 +200,11 @@ inline static bool insOptsPreDec(insOpts opt)
 inline static bool insOptsPostInc(insOpts opt)
 {
     return (opt == INS_OPTS_LDST_POST_INC);
+}
+
+inline static bool insOptsPreInc(insOpts opt)
+{
+    return (opt == INS_OPTS_LDST_PRE_INC);
 }
 
 inline static bool insOptAnyShift(insOpts opt)

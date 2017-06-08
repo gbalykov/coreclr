@@ -1331,6 +1331,13 @@ struct CORINFO_RUNTIME_LOOKUP
     // 1 means that value stored at first offset (offsets[0]) from pointer is offset1, and the next pointer is
     // stored at pointer+offsets[0]+offset1.
     bool                indirectFirstOffset;
+
+    // If set, second offset is indirect.
+    // 0 means that value stored at second offset (offsets[1]) from pointer is next pointer, to which the next offset
+    // (offsets[2]) is added and so on.
+    // 1 means that value stored at second offset (offsets[1]) from pointer is offset2, and the next pointer is
+    // stored at pointer+offsets[1]+offset2.
+    bool                indirectSecondOffset;
 } ;
 
 // Result of calling embedGenericHandle
@@ -2061,7 +2068,8 @@ public:
     virtual void getMethodVTableOffset (
             CORINFO_METHOD_HANDLE       method,                 /* IN */
             unsigned*                   offsetOfIndirection,    /* OUT */
-            unsigned*                   offsetAfterIndirection  /* OUT */
+            unsigned*                   offsetAfterIndirection, /* OUT */
+            unsigned*                   isRelative              /* OUT */
             ) = 0;
 
     // Find the virtual method in implementingClass that overrides virtualMethod,
