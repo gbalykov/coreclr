@@ -141,6 +141,12 @@ public:
         LIMITED_METHOD_CONTRACT;
         SetValueMaybeNull((TADDR)this, addr);
     }
+
+    FORCEINLINE void SetValueVolatile(PTR_TYPE addr)
+    {
+        LIMITED_METHOD_CONTRACT;
+        SetValue(addr);
+    }
 #endif
 
 #ifndef DACCESS_COMPILE
@@ -149,6 +155,39 @@ public:
         dest.m_delta = m_delta;
     }
 #endif // DACCESS_COMPILE
+
+    static TADDR GetDelta(TADDR base, PTR_TYPE addr)
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        PRECONDITION(addr != NULL);
+        return dac_cast<TADDR>(addr) - base;
+    }
+
+    static TADDR GetDeltaForPtr(TADDR base, PTR_TYPE addr)
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        return dac_cast<DPTR(RelativePointer<PTR_TYPE>)>(base)->GetDelta(base, addr);
+    }
+
+    static TADDR GetDeltaMaybeNull(TADDR base, PTR_TYPE addr)
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+
+        if (addr == NULL)
+        {
+            return NULL;
+        }
+        else
+        {
+            return GetDeltaForPtr(base, addr);
+        }
+    }
+
+    static TADDR GetDeltaMaybeNullForPtr(TADDR base, PTR_TYPE addr)
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        return dac_cast<DPTR(RelativePointer<PTR_TYPE>)>(base)->GetDeltaMaybeNull(base, addr);
+    }
 
 private:
 #ifndef DACCESS_COMPILE
@@ -254,6 +293,9 @@ public:
     RelativeFixupPointer<PTR_TYPE>(RelativeFixupPointer<PTR_TYPE> &&) =delete;
     RelativeFixupPointer<PTR_TYPE>& operator = (const RelativeFixupPointer<PTR_TYPE> &) =delete;
     RelativeFixupPointer<PTR_TYPE>& operator = (RelativeFixupPointer<PTR_TYPE> &&) =delete;
+
+    // Default constructor
+    RelativeFixupPointer<PTR_TYPE>() {}
 
     // Returns whether the encoded pointer is NULL.
     BOOL IsNull() const
@@ -441,7 +483,6 @@ public:
     PTR_TYPE GetValue(TADDR base) const
     {
         LIMITED_METHOD_DAC_CONTRACT;
-        PRECONDITION(!IsNull());
         return dac_cast<PTR_TYPE>(m_ptr);
     }
 
@@ -450,6 +491,13 @@ public:
     {
         LIMITED_METHOD_DAC_CONTRACT;
         return dac_cast<DPTR(PlainPointer<PTR_TYPE>)>(base)->GetValue(base);
+    }
+
+    // Returns value of the encoded pointer. The pointer can be NULL.
+    PTR_TYPE GetValueMaybeNull() const
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        return dac_cast<PTR_TYPE>(m_ptr);
     }
 
     // Returns value of the encoded pointer. The pointer can be NULL.
@@ -466,6 +514,39 @@ public:
         return dac_cast<DPTR(PlainPointer<PTR_TYPE>)>(base)->GetValueMaybeNull(base);
     }
 
+    static TADDR GetDelta(TADDR base, PTR_TYPE addr)
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        return dac_cast<TADDR>(addr);
+    }
+
+    static TADDR GetDeltaForPtr(TADDR base, PTR_TYPE addr)
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        return dac_cast<DPTR(PlainPointer<PTR_TYPE>)>(base)->GetDelta(base, addr);
+    }
+
+    static TADDR GetDeltaMaybeNull(TADDR base, PTR_TYPE addr)
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+
+        if (addr == NULL)
+        {
+            return NULL;
+        }
+        else
+        {
+            return GetDeltaForPtr(base, addr);
+        }
+    }
+
+    static TADDR GetDeltaMaybeNullForPtr(TADDR base, PTR_TYPE addr)
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        return dac_cast<DPTR(PlainPointer<PTR_TYPE>)>(base)->GetDeltaMaybeNull(base, addr);
+    }
+
+#ifndef DACCESS_COMPILE
     void SetValue(PTR_TYPE addr)
     {
         LIMITED_METHOD_CONTRACT;
@@ -476,7 +557,6 @@ public:
     void SetValue(TADDR base, PTR_TYPE addr)
     {
         LIMITED_METHOD_CONTRACT;
-        PRECONDITION(addr != NULL);
         m_ptr = dac_cast<TADDR>(addr);
     }
 
@@ -494,7 +574,6 @@ public:
         m_ptr = dac_cast<TADDR>(addr);
     }
 
-#ifndef DACCESS_COMPILE
     // Set encoded value of the pointer. The value can be NULL.
     // Does not need explicit base and thus can be used in non-DAC builds only.
     FORCEINLINE void SetValueMaybeNull(PTR_TYPE addr)
@@ -502,7 +581,6 @@ public:
         LIMITED_METHOD_CONTRACT;
         return SetValueMaybeNull((TADDR)this, addr);
     }
-#endif
 
     // Static version of SetValueMaybeNull. It is meant to simplify access to arrays of pointers.
     FORCEINLINE static void SetValueMaybeNullAtPtr(TADDR base, PTR_TYPE addr)
@@ -510,6 +588,13 @@ public:
         LIMITED_METHOD_CONTRACT;
         dac_cast<DPTR(PlainPointer<PTR_TYPE>)>(base)->SetValueMaybeNull(base, addr);
     }
+
+    FORCEINLINE void SetValueVolatile(PTR_TYPE addr)
+    {
+        LIMITED_METHOD_CONTRACT;
+        VolatileStore((PTR_TYPE *)(&m_ptr), addr);
+    }
+#endif
 
 private:
     TADDR m_ptr;
