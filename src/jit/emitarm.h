@@ -4,6 +4,8 @@
 
 #if defined(_TARGET_ARM_)
 
+#define EMIT_ARM_MAX_IMM_ADD 0x0fff
+
 /************************************************************************/
 /*         Routines that compute the size of / encode instructions      */
 /************************************************************************/

@@ -3428,6 +3428,13 @@ GenTree* Lowering::LowerVirtualVtableCall(GenTreeCall* call)
     // We'll introduce another use of this local so increase its ref count.
     comp->lvaTable[lclNum].incRefCnts(comp->compCurBB->getBBWeight(comp), comp);
 
+    // Get hold of the vtable offset (note: this might be expensive)
+    unsigned vtabOffsOfIndirection;
+    unsigned vtabOffsAfterIndirection;
+    unsigned isRelative;
+    comp->info.compCompHnd->getMethodVTableOffset(call->gtCallMethHnd, &vtabOffsOfIndirection,
+                                                  &vtabOffsAfterIndirection, &isRelative);
+
     // If the thisPtr is a local field, then construct a local field type node
     GenTree* local;
     if (thisPtr->isLclField())
@@ -3443,17 +3450,21 @@ GenTree* Lowering::LowerVirtualVtableCall(GenTreeCall* call)
     // pointer to virtual table = [REG_CALL_THIS + offs]
     GenTree* result = Ind(Offset(local, VPTR_OFFS));
 
-    // Get hold of the vtable offset (note: this might be expensive)
-    unsigned vtabOffsOfIndirection;
-    unsigned vtabOffsAfterIndirection;
-    comp->info.compCompHnd->getMethodVTableOffset(call->gtCallMethHnd, &vtabOffsOfIndirection,
-                                                  &vtabOffsAfterIndirection);
-
     // Get the appropriate vtable chunk
     if (vtabOffsOfIndirection != CORINFO_VIRTUALCALL_NO_CHUNK)
     {
-        // result = [REG_CALL_IND_SCRATCH + vtabOffsOfIndirection]
-        result = Ind(Offset(result, vtabOffsOfIndirection));
+        if (isRelative)
+        {
+            result           = Offset(result, vtabOffsOfIndirection);
+            GenTree* result1 = comp->gtCloneExpr(result);
+            result1          = comp->gtNewOperNode(GT_IND, TYP_I_IMPL, result1, false);
+            result           = comp->gtNewOperNode(GT_ADD, TYP_I_IMPL, result, result1);
+        }
+        else
+        {
+            // result = [REG_CALL_IND_SCRATCH + vtabOffsOfIndirection]
+            result = Ind(Offset(result, vtabOffsOfIndirection));
+        }
     }
 
     // Load the function address
