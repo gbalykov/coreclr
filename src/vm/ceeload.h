@@ -2910,6 +2910,10 @@ public:
                                          Module *pContainingModule = NULL,
                                          ClassLoadLevel level = CLASS_LOADED);
 
+    static void RestoreMethodTablePointer(PlainPointer<PTR_MethodTable> * ppMT,
+                                          Module *pContainingModule = NULL,
+                                          ClassLoadLevel level = CLASS_LOADED);
+
     static void RestoreFieldDescPointer(FixupPointer<PTR_FieldDesc> * ppFD);
 
     static void RestoreModulePointer(RelativeFixupPointer<PTR_Module> * ppModule, Module *pContainingModule);
