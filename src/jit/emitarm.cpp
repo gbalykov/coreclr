@@ -2715,7 +2715,7 @@ void emitter::emitIns_R_R_I(instruction ins,
             assert(offsetFitsInVectorMem(imm)); // required for encoding
             if (insOptAnyInc(opt))
             {
-                if (insOptsPostInc(opt))
+                if (insOptsPostInc(opt) || insOptsPreInc(opt))
                 {
                     assert(imm > 0);
                 }
@@ -2779,7 +2779,7 @@ void emitter::emitIns_R_R_I(instruction ins,
 
             if (insOptAnyInc(opt))
             {
-                if (insOptsPostInc(opt))
+                if (insOptsPostInc(opt) || insOptsPreInc(opt))
                     assert(imm > 0);
                 else // insOptsPreDec(opt)
                     assert(imm < 0);
@@ -3275,7 +3275,7 @@ void emitter::emitIns_R_R_R_I(instruction ins,
 
             if (insOptAnyInc(opt))
             {
-                if (insOptsPostInc(opt))
+                if (insOptsPostInc(opt) || insOptsPreInc(opt))
                     assert(imm > 0);
                 else // insOptsPreDec(opt)
                     assert(imm < 0);

@@ -3556,32 +3556,63 @@ GenTree* Lowering::LowerVirtualVtableCall(GenTreeCall* call)
     // We'll introduce another use of this local so increase its ref count.
     comp->lvaTable[lclNum].incRefCnts(comp->compCurBB->getBBWeight(comp), comp);
 
+    // Get hold of the vtable offset (note: this might be expensive)
+    unsigned vtabOffsOfIndirection;
+    unsigned vtabOffsAfterIndirection;
+    unsigned isRelative;
+    comp->info.compCompHnd->getMethodVTableOffset(call->gtCallMethHnd, &vtabOffsOfIndirection,
+                                                  &vtabOffsAfterIndirection, &isRelative);
+
     // If the thisPtr is a local field, then construct a local field type node
     GenTree* local;
+    GenTree* local1;
     if (thisPtr->isLclField())
     {
         local = new (comp, GT_LCL_FLD)
             GenTreeLclFld(GT_LCL_FLD, thisPtr->TypeGet(), lclNum, thisPtr->AsLclFld()->gtLclOffs);
+
+        if (isRelative)
+        {
+            local1 = new (comp, GT_LCL_FLD)
+                GenTreeLclFld(GT_LCL_FLD, thisPtr->TypeGet(), lclNum, thisPtr->AsLclFld()->gtLclOffs);
+        }
     }
     else
     {
         local = new (comp, GT_LCL_VAR) GenTreeLclVar(GT_LCL_VAR, thisPtr->TypeGet(), lclNum, BAD_IL_OFFSET);
+
+        if (isRelative)
+        {
+            local1 = new (comp, GT_LCL_VAR) GenTreeLclVar(GT_LCL_VAR, thisPtr->TypeGet(), lclNum, BAD_IL_OFFSET);
+        }
     }
 
     // pointer to virtual table = [REG_CALL_THIS + offs]
     GenTree* result = Ind(Offset(local, VPTR_OFFS));
+    GenTree* result1;
 
-    // Get hold of the vtable offset (note: this might be expensive)
-    unsigned vtabOffsOfIndirection;
-    unsigned vtabOffsAfterIndirection;
-    comp->info.compCompHnd->getMethodVTableOffset(call->gtCallMethHnd, &vtabOffsOfIndirection,
-                                                  &vtabOffsAfterIndirection);
+    if (isRelative)
+    {
+        result1 = Ind(Offset(local1, VPTR_OFFS));
+    }
 
     // Get the appropriate vtable chunk
     if (vtabOffsOfIndirection != CORINFO_VIRTUALCALL_NO_CHUNK)
     {
-        // result = [REG_CALL_IND_SCRATCH + vtabOffsOfIndirection]
-        result = Ind(Offset(result, vtabOffsOfIndirection));
+        if (isRelative)
+        {
+            result =
+                comp->gtNewOperNode(GT_ADD, TYP_I_IMPL, result, comp->gtNewIconNode(vtabOffsOfIndirection, TYP_I_IMPL));
+            result1 = comp->gtNewOperNode(GT_ADD, TYP_I_IMPL, result1,
+                                          comp->gtNewIconNode(vtabOffsOfIndirection, TYP_I_IMPL));
+            result = Ind(Offset(result, 0));
+            result = comp->gtNewOperNode(GT_ADD, TYP_I_IMPL, result, result1);
+        }
+        else
+        {
+            // result = [REG_CALL_IND_SCRATCH + vtabOffsOfIndirection]
+            result = Ind(Offset(result, vtabOffsOfIndirection));
+        }
     }
 
     // Load the function address
