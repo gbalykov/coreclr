@@ -17,6 +17,17 @@
     TEXTAREA
 
 
+    MACRO
+    FIX_INDIRECTION $Reg, $label
+#ifdef FEATURE_PREJIT
+        tst    $Reg, #1
+        beq     $label
+        ldr    $Reg, [$Reg, #-1]
+$label
+#endif
+    MEND
+
+
 ; ------------------------------------------------------------------
 ; Start of the writeable code region
     LEAF_ENTRY JIT_PatchedCodeStart
