@@ -19215,25 +19215,14 @@ regMaskTP CodeGen::genCodeForCall(GenTreeCall* call, bool valUsed)
                 {
                     noway_assert(helperNum != CORINFO_HELP_UNDEF);
 
-#ifdef FEATURE_READYTORUN_COMPILER
-                    if (call->gtEntryPoint.addr != NULL)
-                    {
-                        accessType = call->gtEntryPoint.accessType;
-                        addr       = call->gtEntryPoint.addr;
-                    }
-                    else
-#endif // FEATURE_READYTORUN_COMPILER
-                    {
-                        void* pAddr;
+                    void* pAddr;
+                    addr = compiler->compGetHelperFtn(helperNum, (void**)&pAddr);
 
-                        accessType = IAT_VALUE;
-                        addr       = compiler->compGetHelperFtn(helperNum, (void**)&pAddr);
-
-                        if (!addr)
-                        {
-                            accessType = IAT_PVALUE;
-                            addr       = pAddr;
-                        }
+                    accessType = IAT_VALUE;
+                    if (!addr)
+                    {
+                        accessType = IAT_PVALUE;
+                        addr       = pAddr;
                     }
                 }
                 else
@@ -19248,21 +19237,11 @@ regMaskTP CodeGen::genCodeForCall(GenTreeCall* call, bool valUsed)
                     if ((call->gtFlags & GTF_CALL_NULLCHECK) == 0)
                         aflags = (CORINFO_ACCESS_FLAGS)(aflags | CORINFO_ACCESS_NONNULL);
 
-#ifdef FEATURE_READYTORUN_COMPILER
-                    if (call->gtEntryPoint.addr != NULL)
-                    {
-                        accessType = call->gtEntryPoint.accessType;
-                        addr       = call->gtEntryPoint.addr;
-                    }
-                    else
-#endif // FEATURE_READYTORUN_COMPILER
-                    {
-                        CORINFO_CONST_LOOKUP addrInfo;
-                        compiler->info.compCompHnd->getFunctionEntryPoint(methHnd, &addrInfo, aflags);
+                    CORINFO_CONST_LOOKUP addrInfo;
+                    compiler->info.compCompHnd->getFunctionEntryPoint(methHnd, &addrInfo, aflags);
 
-                        accessType = addrInfo.accessType;
-                        addr       = addrInfo.addr;
-                    }
+                    accessType = addrInfo.accessType;
+                    addr       = addrInfo.addr;
                 }
 
                 if (fTailCall)
