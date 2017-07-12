@@ -1642,7 +1642,7 @@ BOOL EEJitManager::LoadJIT()
 
     m_AltJITCompiler = NULL;
 
-    if (altJitConfig != NULL)
+    //if (altJitConfig != NULL)
     {
         // Load the altjit into the system.
         // Note: altJitName must be declared as a const otherwise assigning the string
