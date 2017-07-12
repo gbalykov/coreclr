@@ -717,7 +717,7 @@ void Zapper::InitEE(BOOL fForceDebug, BOOL fForceProfile, BOOL fForceInstrument)
     m_hAltJITCompiler = NULL;
     m_alternateJit = NULL;
 
-    if (altJit != NULL)
+    //if (altJit != NULL)
     {
         // Allow a second jit to be loaded into the system.
         // 
