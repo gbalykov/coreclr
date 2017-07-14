@@ -83,9 +83,6 @@ Type for shared memory blocks. use SHMPTR_TO_PTR to get a useable address.
  */
 typedef DWORD_PTR SHMPTR;
 
-#define MAX_SEGMENTS 256
-
-
 typedef enum {
     SIID_PROCESS_INFO,/* pointers to PROCESS structures? */
     SIID_NAMED_OBJECTS,
@@ -117,30 +114,9 @@ typedef struct _SMNO
 SHMPTR_TO_PTR
 
 Macro to convert a SHMPTR value into a valid (for this process) pointer.
-
-In debug builds, we always call the function to do full checks.
-In release builds, check if the segment is known, and if it is, do only minimal
-validation (if segment is unknown, we have to call the function)
  */
-#if _DEBUG
-
 #define SHMPTR_TO_PTR(shmptr) \
     SHMPtrToPtr(shmptr)
-
-#else /* !_DEBUG */
-
-extern int shm_numsegments;
-
-/* array containing the base address of each segment */
-extern Volatile<LPVOID> shm_segment_bases[MAX_SEGMENTS];
-
-#define SHMPTR_TO_PTR(shmptr)\
-    ((shmptr)?(((static_cast<int>(shmptr)>>24)<shm_numsegments)?\
-    reinterpret_cast<LPVOID>(reinterpret_cast<size_t>(shm_segment_bases[static_cast<int>(shmptr)>>24].Load())+(static_cast<int>(shmptr)&0x00FFFFFF)):\
-    SHMPtrToPtr(shmptr)): static_cast<LPVOID>(NULL))
-
-
-#endif /* _DEBUG */
 
 /* Set ptr to NULL if shmPtr == 0, else set ptr to SHMPTR_TO_PTR(shmptr) 
    return FALSE if SHMPTR_TO_PTR returns NULL ptr from non null shmptr, 
@@ -288,40 +264,6 @@ Returns the new address as SHMPTR on success.
 Returns (SHMPTR)NULL on failure.
 --*/
 SHMPTR SHMWStrDup( LPCWSTR string );
-
-
-/*++
-SHMFindNamedObjectByName
-
-Searches for an object whose name matches the name and ID passed in.
-
-Returns a SHMPTR to its location in shared memory. If no object
-matches the name, the function returns NULL and sets pbNameExists to FALSE.
-If an object matches the name but is of a different type, the function
-returns NULL and sets pbNameExists to TRUE.
-
---*/
-SHMPTR SHMFindNamedObjectByName( LPCWSTR lpName, SHM_NAMED_OBJECTS_ID oid,
-                                 BOOL *pbNameExists );
-
-/*++ 
-SHMRemoveNamedObject
-
-Removes the specified named object from the list
-
-No return.
-
-note : the caller is reponsible for releasing all associated memory
---*/
-void SHMRemoveNamedObject( SHMPTR shmNamedObject );
-
-/*++ SHMAddNamedObject
-
-Adds the specified named object to the list.
-
-No return.
---*/
-void SHMAddNamedObject( SHMPTR shmNewNamedObject );
 
 #ifdef __cplusplus
 }
