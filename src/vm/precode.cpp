@@ -524,7 +524,7 @@ TADDR Precode::AllocateTemporaryEntryPoints(MethodDescChunk *  pChunk,
 #ifdef HAS_COMPACT_ENTRYPOINTS
     // Note that these are just best guesses to save memory. If we guessed wrong,
     // we will allocate a new exact type of precode in GetOrCreatePrecode.
-    BOOL fForcedPrecode = pFirstMD->RequiresStableEntryPoint(count > 1);
+    BOOL fForcedPrecode = FALSE;//pFirstMD->RequiresStableEntryPoint(count > 1);
 
 #ifdef _TARGET_ARM_
     if (pFirstMD->RequiresMethodDescCallingConvention(count > 1)
