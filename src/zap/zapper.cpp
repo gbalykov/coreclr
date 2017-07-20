@@ -325,7 +325,7 @@ void ZapperOptions::SetCompilerFlags(void)
 
 #if defined(_TARGET_ARM_)
 # if defined(PLATFORM_UNIX)
-    m_compilerFlags.Set(CORJIT_FLAGS::CORJIT_FLAG_RELATIVE_CODE_RELOCS);
+    //m_compilerFlags.Set(CORJIT_FLAGS::CORJIT_FLAG_RELATIVE_CODE_RELOCS);
 # endif // defined(PLATFORM_UNIX)
 #endif // defined(_TARGET_ARM_)
 }
