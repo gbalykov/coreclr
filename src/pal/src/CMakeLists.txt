@@ -379,8 +379,6 @@ if(HAVE_NUMA_H)
   )
 endif(HAVE_NUMA_H)
 
-add_subdirectory(examples)
-
 if(FEATURE_EVENT_TRACE)
     add_subdirectory($ENV{__IntermediatesDir}/Generated/eventprovider ${CMAKE_CURRENT_BINARY_DIR}/eventprovider)
 endif(FEATURE_EVENT_TRACE)
