@@ -441,7 +441,7 @@ CorUnix::InternalCreateFile(
     HANDLE *phFile
     )
 {
-  FILE *f = fopen ("/tmp/out.txt", "a");
+  //FILE *f = fopen ("/tmp/out.txt", "a");
     PAL_ERROR palError = 0;
     IPalObject *pFileObject = NULL;
     IPalObject *pRegisteredFile = NULL;
@@ -724,7 +724,7 @@ CorUnix::InternalCreateFile(
         &pFileObject
         );
         
-    fprintf (f, "Alloc InternalCreateFile %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
+    //fprintf (f, "Alloc InternalCreateFile %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
 
     if (NO_ERROR != palError)
     {
@@ -837,7 +837,7 @@ done:
         palError = ERROR_ALREADY_EXISTS;
     }
 
-    fclose (f);
+    //fclose (f);
 
     return palError;
 }
@@ -4030,7 +4030,7 @@ CorUnix::InternalCreatePipe(
     DWORD nSize
     )
 {
-  FILE *f = fopen ("/tmp/out.txt", "a");
+  //FILE *f = fopen ("/tmp/out.txt", "a");
   
     PAL_ERROR palError = NO_ERROR;
     IPalObject *pReadFileObject = NULL;
@@ -4094,7 +4094,7 @@ CorUnix::InternalCreatePipe(
         &pReadFileObject
         );
     
-    fprintf (f, "Alloc InternalCreatePipe %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
+    //fprintf (f, "Alloc InternalCreatePipe %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
 
     if (NO_ERROR != palError)
     {
@@ -4139,7 +4139,7 @@ CorUnix::InternalCreatePipe(
         &pWriteFileObject
         );
         
-    fprintf (f, "Alloc InternalCreatePipe %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
+    //fprintf (f, "Alloc InternalCreatePipe %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
 
     if (NO_ERROR != palError)
     {
@@ -4251,7 +4251,7 @@ InternalCreatePipeExit:
         pWriteRegisteredFile->ReleaseReference(pThread);
     }
 
-    fclose (f);
+    //fclose (f);
 
     return palError;
 }
@@ -4568,7 +4568,7 @@ Return value:
 --*/
 static HANDLE init_std_handle(HANDLE * pStd, FILE *stream)
 {
-  FILE *f = fopen ("/tmp/out.txt", "a");
+  //FILE *f = fopen ("/tmp/out.txt", "a");
     CPalThread *pThread = InternalGetCurrentThread();
     PAL_ERROR palError = NO_ERROR;
     IPalObject *pFileObject = NULL;
@@ -4597,7 +4597,7 @@ static HANDLE init_std_handle(HANDLE * pStd, FILE *stream)
         &pFileObject
         );
         
-    fprintf (f, "Alloc init_std_handle %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
+    //fprintf (f, "Alloc init_std_handle %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
 
     if (NO_ERROR != palError)
     {
@@ -4685,7 +4685,7 @@ done:
         close(new_fd);
     }
     
-    fclose (f);
+    //fclose (f);
 
     return hFile;
 }

@@ -46,7 +46,7 @@ CPalObjectBase::Initialize(
     )
 {
     PAL_ERROR palError = NO_ERROR;
-    FILE *f = fopen ("/tmp/out.txt", "a");
+    //FILE *f = fopen ("/tmp/out.txt", "a");
 
     _ASSERTE(NULL != pthr);
     _ASSERTE(NULL != poa);
@@ -60,7 +60,7 @@ CPalObjectBase::Initialize(
 
     if (0 != m_pot->GetImmutableDataSize())
     {
-        fprintf (f, "alloc immutable data %u\n", m_pot->GetImmutableDataSize());
+        //fprintf (f, "alloc immutable data %u\n", m_pot->GetImmutableDataSize());
         
         m_pvImmutableData = InternalMalloc(m_pot->GetImmutableDataSize());
         
@@ -85,7 +85,7 @@ CPalObjectBase::Initialize(
             goto IntializeExit;
         }
         
-        fprintf (f, "alloc local data %u\n", m_pot->GetProcessLocalDataSize());
+        //fprintf (f, "alloc local data %u\n", m_pot->GetProcessLocalDataSize());
 
         m_pvLocalData = InternalMalloc(m_pot->GetProcessLocalDataSize());
         if (NULL != m_pvLocalData)
@@ -109,7 +109,7 @@ IntializeExit:
 
     LOGEXIT("CPalObjectBase::Initialize returns %d\n", palError);
 
-    fclose (f);
+    //fclose (f);
 
     return palError;
 }
@@ -345,12 +345,12 @@ Function:
 
 CPalObjectBase::~CPalObjectBase()
 {
-  FILE *f = fopen ("/tmp/out.txt", "a");
+  //FILE *f = fopen ("/tmp/out.txt", "a");
     ENTRY("CPalObjectBase::~CPalObjectBase(this = %p)\n", this);
 
     if (NULL != m_pvImmutableData)
     {
-        fprintf (f, "free immutable data %u\n", m_pot->GetImmutableDataSize());
+      //  fprintf (f, "free immutable data %u\n", m_pot->GetImmutableDataSize());
         // if (m_pvImmutableData->szFileName)
         // {
         //   free (m_pvImmutableData->szFileName);
@@ -360,7 +360,7 @@ CPalObjectBase::~CPalObjectBase()
 
     if (NULL != m_pvLocalData)
     {
-        fprintf (f, "free local data %u\n", m_pot->GetProcessLocalDataSize());
+        //fprintf (f, "free local data %u\n", m_pot->GetProcessLocalDataSize());
         free(m_pvLocalData);
     }
 
@@ -371,6 +371,6 @@ CPalObjectBase::~CPalObjectBase()
 
     LOGEXIT("CPalObjectBase::~CPalObjectBase\n");
     
-    fclose (f);
+    //fclose (f);
 }
 
