@@ -62,26 +62,11 @@ CPalObjectBase::Initialize(
     {
         fprintf (f, "alloc immutable data %u\n", m_pot->GetImmutableDataSize());
         
-        // if (0 != poa->sObjectName.GetStringLength())
-        // {
-        //     m_pvImmutableData = InternalMalloc(m_pot->GetImmutableDataSize() - MAXPATHLEN + poa->sObjectName.GetStringLength());
-        // }
-        // else
-        {
-          m_pvImmutableData = InternalMalloc(m_pot->GetImmutableDataSize());
-        }
-        
+        m_pvImmutableData = InternalMalloc(m_pot->GetImmutableDataSize());
         
         if (NULL != m_pvImmutableData)
         {
-          // if (0 != poa->sObjectName.GetStringLength())
-          // {
-          //   ZeroMemory(m_pvImmutableData, m_pot->GetImmutableDataSize() - MAXPATHLEN + poa->sObjectName.GetStringLength());
-          // }
-          // else
-          {
-            ZeroMemory(m_pvImmutableData, m_pot->GetImmutableDataSize());
-          }
+          ZeroMemory(m_pvImmutableData, m_pot->GetImmutableDataSize());
         }
         else
         {
@@ -366,6 +351,10 @@ CPalObjectBase::~CPalObjectBase()
     if (NULL != m_pvImmutableData)
     {
         fprintf (f, "free immutable data %u\n", m_pot->GetImmutableDataSize());
+        // if (m_pvImmutableData->szFileName)
+        // {
+        //   free (m_pvImmutableData->szFileName);
+        // }
         free(m_pvImmutableData);
     }
 

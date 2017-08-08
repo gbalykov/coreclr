@@ -181,6 +181,8 @@ FileMappingCleanupRoutine(
         {
             unlink(pImmutableData->szFileName);
         }
+        
+        free (pImmutableData->szFileName);
     }
 
     if (FALSE == fShutdown)
@@ -499,6 +501,9 @@ CorUnix::InternalCreateFileMapping(
         //
         
         /* Anonymous mapped files. */
+        _ASSERTE (pImmutableData->szFileName == NULL);
+        pImmutableData->szFileName = (char*) malloc (sizeof ("/dev/zero") + 1);
+
         if (strcpy_s(pImmutableData->szFileName, sizeof(pImmutableData->szFileName), "/dev/zero") != SAFECRT_SUCCESS)
         {
             ERROR( "strcpy_s failed!\n" );
@@ -596,8 +601,12 @@ CorUnix::InternalCreateFileMapping(
                 }
                 goto ExitInternalCreateFileMapping;
             }
+            
+            _ASSERTE (pImmutableData->szFileName == NULL);
+            pImmutableData->ssize = pFileLocalData->ssize;
+            pImmutableData->szFileName = (char*)malloc (pImmutableData->ssize);
   
-            if (strcpy_s(pImmutableData->szFileName, sizeof(pImmutableData->szFileName), pFileLocalData->unix_filename) != SAFECRT_SUCCESS)
+            if (strcpy_s(pImmutableData->szFileName, pImmutableData->ssize, pFileLocalData->unix_filename) != SAFECRT_SUCCESS)
             {
                 ERROR( "strcpy_s failed!\n" );
                 palError = ERROR_INTERNAL_ERROR;

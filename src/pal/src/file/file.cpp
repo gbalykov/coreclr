@@ -119,6 +119,8 @@ FileCleanupRoutine(
     {
         close(pLocalData->unix_fd);
     }
+    
+    free (pLocalData->unix_filename);
 
     pLocalDataLock->ReleaseLock(pThread, FALSE);
 }
@@ -741,7 +743,10 @@ CorUnix::InternalCreateFile(
         goto done;
     }
 
-    if (strcpy_s(pLocalData->unix_filename, sizeof(pLocalData->unix_filename), lpUnixPath) != SAFECRT_SUCCESS)
+    _ASSERTE (pLocalData->unix_filename == NULL);
+    pLocalData->ssize = lpUnixPath.GetCount() + 2;
+    pLocalData->unix_filename = (char*) malloc (pLocalData->ssize);
+    if (strcpy_s(pLocalData->unix_filename, pLocalData->ssize, lpUnixPath) != SAFECRT_SUCCESS)
     {
         palError = ERROR_INSUFFICIENT_BUFFER;
         TRACE("strcpy_s failed!\n");
