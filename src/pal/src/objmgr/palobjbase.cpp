@@ -46,6 +46,7 @@ CPalObjectBase::Initialize(
     )
 {
     PAL_ERROR palError = NO_ERROR;
+    FILE *f = fopen ("/tmp/out.txt", "a");
 
     _ASSERTE(NULL != pthr);
     _ASSERTE(NULL != poa);
@@ -59,12 +60,28 @@ CPalObjectBase::Initialize(
 
     if (0 != m_pot->GetImmutableDataSize())
     {
-        printf ("alloc immutable data %u\n", m_pot->GetImmutableDataSize());
+        fprintf (f, "alloc immutable data %u\n", m_pot->GetImmutableDataSize());
         
-        m_pvImmutableData = InternalMalloc(m_pot->GetImmutableDataSize());
+        // if (0 != poa->sObjectName.GetStringLength())
+        // {
+        //     m_pvImmutableData = InternalMalloc(m_pot->GetImmutableDataSize() - MAXPATHLEN + poa->sObjectName.GetStringLength());
+        // }
+        // else
+        {
+          m_pvImmutableData = InternalMalloc(m_pot->GetImmutableDataSize());
+        }
+        
+        
         if (NULL != m_pvImmutableData)
         {
+          // if (0 != poa->sObjectName.GetStringLength())
+          // {
+          //   ZeroMemory(m_pvImmutableData, m_pot->GetImmutableDataSize() - MAXPATHLEN + poa->sObjectName.GetStringLength());
+          // }
+          // else
+          {
             ZeroMemory(m_pvImmutableData, m_pot->GetImmutableDataSize());
+          }
         }
         else
         {
@@ -83,7 +100,7 @@ CPalObjectBase::Initialize(
             goto IntializeExit;
         }
         
-        printf ("alloc local data %u\n", m_pot->GetProcessLocalDataSize());
+        fprintf (f, "alloc local data %u\n", m_pot->GetProcessLocalDataSize());
 
         m_pvLocalData = InternalMalloc(m_pot->GetProcessLocalDataSize());
         if (NULL != m_pvLocalData)
@@ -106,6 +123,8 @@ CPalObjectBase::Initialize(
 IntializeExit:
 
     LOGEXIT("CPalObjectBase::Initialize returns %d\n", palError);
+
+    fclose (f);
 
     return palError;
 }
@@ -341,15 +360,18 @@ Function:
 
 CPalObjectBase::~CPalObjectBase()
 {
+  FILE *f = fopen ("/tmp/out.txt", "a");
     ENTRY("CPalObjectBase::~CPalObjectBase(this = %p)\n", this);
 
     if (NULL != m_pvImmutableData)
     {
+        fprintf (f, "free immutable data %u\n", m_pot->GetImmutableDataSize());
         free(m_pvImmutableData);
     }
 
     if (NULL != m_pvLocalData)
     {
+        fprintf (f, "free local data %u\n", m_pot->GetProcessLocalDataSize());
         free(m_pvLocalData);
     }
 
@@ -359,5 +381,7 @@ CPalObjectBase::~CPalObjectBase()
     }
 
     LOGEXIT("CPalObjectBase::~CPalObjectBase\n");
+    
+    fclose (f);
 }
 

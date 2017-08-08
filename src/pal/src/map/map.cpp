@@ -404,6 +404,7 @@ CorUnix::InternalCreateFileMapping(
     HANDLE *phMapping
     )
 {
+  FILE *f = fopen ("/tmp/out.txt", "a");
     CObjectAttributes objectAttributes(lpName, lpFileMappingAttributes);
     PAL_ERROR palError = NO_ERROR;
     IPalObject *pMapping = NULL;
@@ -470,7 +471,7 @@ CorUnix::InternalCreateFileMapping(
         &pMapping
         );
 
-    printf ("Alloc InternalCreateFileMapping %u, %u\n", otFileMapping.GetImmutableDataSize(), otFileMapping.GetProcessLocalDataSize());
+    fprintf (f, "Alloc InternalCreateFileMapping %u, %u\n", otFileMapping.GetImmutableDataSize(), otFileMapping.GetProcessLocalDataSize());
 
     if (NO_ERROR != palError)
     {
@@ -786,6 +787,8 @@ ExitInternalCreateFileMapping:
     {
         pFileObject->ReleaseReference(pThread);
     }
+    
+    fclose (f);
 
     return palError;
 }
