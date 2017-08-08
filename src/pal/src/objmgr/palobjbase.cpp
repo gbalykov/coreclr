@@ -59,6 +59,8 @@ CPalObjectBase::Initialize(
 
     if (0 != m_pot->GetImmutableDataSize())
     {
+        printf ("alloc immutable data %u\n", m_pot->GetImmutableDataSize());
+        
         m_pvImmutableData = InternalMalloc(m_pot->GetImmutableDataSize());
         if (NULL != m_pvImmutableData)
         {
@@ -81,6 +83,8 @@ CPalObjectBase::Initialize(
             goto IntializeExit;
         }
         
+        printf ("alloc local data %u\n", m_pot->GetProcessLocalDataSize());
+
         m_pvLocalData = InternalMalloc(m_pot->GetProcessLocalDataSize());
         if (NULL != m_pvLocalData)
         {

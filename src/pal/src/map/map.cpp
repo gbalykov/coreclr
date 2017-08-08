@@ -470,6 +470,8 @@ CorUnix::InternalCreateFileMapping(
         &pMapping
         );
 
+    printf ("Alloc InternalCreateFileMapping %u, %u\n", otFileMapping.GetImmutableDataSize(), otFileMapping.GetProcessLocalDataSize());
+
     if (NO_ERROR != palError)
     {
         goto ExitInternalCreateFileMapping;

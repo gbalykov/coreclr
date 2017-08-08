@@ -720,6 +720,8 @@ CorUnix::InternalCreateFile(
         &oaFile,
         &pFileObject
         );
+        
+    printf ("Alloc InternalCreateFile %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
 
     if (NO_ERROR != palError)
     {
@@ -4081,6 +4083,8 @@ CorUnix::InternalCreatePipe(
         &oaFile,
         &pReadFileObject
         );
+        
+    printf ("Alloc InternalCreatePipe %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
 
     if (NO_ERROR != palError)
     {
@@ -4124,6 +4128,8 @@ CorUnix::InternalCreatePipe(
         &oaFile,
         &pWriteFileObject
         );
+        
+    printf ("Alloc InternalCreatePipe %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
 
     if (NO_ERROR != palError)
     {
@@ -4577,6 +4583,8 @@ static HANDLE init_std_handle(HANDLE * pStd, FILE *stream)
         &oa,
         &pFileObject
         );
+        
+    printf ("Alloc init_std_handle %u, %u\n", otFile.GetImmutableDataSize(), otFile.GetProcessLocalDataSize());
 
     if (NO_ERROR != palError)
     {
