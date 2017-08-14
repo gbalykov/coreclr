@@ -44,7 +44,8 @@ namespace CorUnix
                                   In Windows we can open a file for writing only */
         int  open_flags;       /* stores Unix file creation flags */
         BOOL open_flags_deviceaccessonly;
-        char unix_filename[MAXPATHLEN];
+        CHAR *unix_filename;
+        DWORD nameSize;
         BOOL inheritable;
     };
 

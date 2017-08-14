@@ -1637,13 +1637,6 @@ PALAPI
 PAL_LocalHandleToRemote(
             IN HANDLE hLocal);
 
-PALIMPORT
-HANDLE
-PALAPI
-PAL_RemoteHandleToLocal(
-            IN RHANDLE hRemote);
-
-
 #define DUPLICATE_CLOSE_SOURCE      0x00000001
 #define DUPLICATE_SAME_ACCESS       0x00000002
 
