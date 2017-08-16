@@ -255,7 +255,7 @@ void GCLog (const char *fmt, ... );
 //#define dprintf(l,x) {if (l == DT_LOG_0) {GCLog x;}}
 //#define dprintf(l,x) {if (trace_gc && ((l <= 2) || (l == BGC_LOG) || (l==GTC_LOG))) {GCLog x;}}
 //#define dprintf(l,x) {if ((l == 1) || (l == 2222)) {GCLog x;}}
-#define dprintf(l,x) {if ((l <= 1) || (l == GTC_LOG)) {GCLog x;}}
+
 //#define dprintf(l,x) {if ((l==GTC_LOG) || (l <= 1)) {GCLog x;}}
 //#define dprintf(l,x) {if (trace_gc && ((l <= print_level) || (l==GTC_LOG))) {GCLog x;}}
 //#define dprintf(l,x) {if (l==GTC_LOG) {printf ("\n");printf x ; fflush(stdout);}}
@@ -264,16 +264,18 @@ void GCLog (const char *fmt, ... );
 // Nobody used the logging mechanism that used to be here. If we find ourselves
 // wanting to inspect GC logs on unmodified builds, we can use this define here
 // to do so.
-#define dprintf(l, x)
+//#define dprintf(l, x)
 
 #endif //SIMPLE_DPRINTF
 
 #else //DACCESS_COMPILE
-#define dprintf(l,x)
+//#define dprintf(l,x)
 #endif //DACCESS_COMPILE
 #else //TRACE_GC
-#define dprintf(l,x)
+//#define dprintf(l,x)
 #endif //TRACE_GC
+
+#define dprintf(l,...) {printf __VA_ARGS__; printf("\n");}
 
 #ifndef FEATURE_REDHAWK
 #undef  assert
