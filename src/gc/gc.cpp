@@ -2165,9 +2165,9 @@ uint8_t* gc_heap::pad_for_alignment_large (uint8_t* newAlloc, int requiredAlignm
 
 //CLR_SIZE  is the max amount of bytes from gen0 that is set to 0 in one chunk
 #ifdef SERVER_GC
-#define CLR_SIZE ((size_t)(4))
+#define CLR_SIZE ((size_t)(8*1024))
 #else //SERVER_GC
-#define CLR_SIZE ((size_t)(4))
+#define CLR_SIZE ((size_t)(8*1024))
 #endif //SERVER_GC
 
 #define END_SPACE_AFTER_GC (LARGE_OBJECT_SIZE + MAX_STRUCTALIGN)
@@ -6097,8 +6097,8 @@ bool gc_heap::new_allocation_allowed (int gen_number)
     {
         dprintf (3, ("evaluating allocation rate"));
         dynamic_data* dd0 = dynamic_data_of (0);
-        if ((allocation_running_amount - dd_new_allocation (dd0)) >
-            dd_min_gc_size (dd0))
+        // if ((allocation_running_amount - dd_new_allocation (dd0)) >
+        //     dd_min_gc_size (dd0))
         {
             uint32_t ctime = GCToOSInterface::GetLowPrecisionTimeStamp();
             if ((ctime - allocation_running_time) > 1000)
