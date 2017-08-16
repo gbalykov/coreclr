@@ -13191,17 +13191,18 @@ int gc_heap::try_allocate_more_space (alloc_context* acontext, size_t size,
 #ifdef SYNCHRONIZATION_STATS
         bad_suspension++;
 #endif //SYNCHRONIZATION_STATS
-//         dprintf (/*100*/ 2, ("running out of budget on gen%d, gc", gen_number));
-// 
-//         if (!settings.concurrent || (gen_number == 0))
-//         {
-//             vm_heap->GarbageCollectGeneration (0, ((gen_number == 0) ? reason_alloc_soh : reason_alloc_loh));
-// #ifdef MULTIPLE_HEAPS
-//             enter_spin_lock (&more_space_lock);
-//             add_saved_spinlock_info (me_acquire, mt_try_budget);
-//             dprintf (SPINLOCK_LOG, ("[%d]Emsl out budget", heap_number));
-// #endif //MULTIPLE_HEAPS
-//         }
+        dprintf (/*100*/ 2, ("running out of budget on gen%d, gc", gen_number));
+
+        if (!settings.concurrent || (gen_number == 0))
+        {
+            //vm_heap->GarbageCollectGeneration (0, ((gen_number == 0) ? reason_alloc_soh : reason_alloc_loh));
+            vm_heap->GarbageCollectGeneration (max_generation, reason_oos_soh);
+#ifdef MULTIPLE_HEAPS
+            enter_spin_lock (&more_space_lock);
+            add_saved_spinlock_info (me_acquire, mt_try_budget);
+            dprintf (SPINLOCK_LOG, ("[%d]Emsl out budget", heap_number));
+#endif //MULTIPLE_HEAPS
+        }
     }
 
     BOOL can_allocate = ((gen_number == 0) ?
