@@ -2165,9 +2165,9 @@ uint8_t* gc_heap::pad_for_alignment_large (uint8_t* newAlloc, int requiredAlignm
 
 //CLR_SIZE  is the max amount of bytes from gen0 that is set to 0 in one chunk
 #ifdef SERVER_GC
-#define CLR_SIZE ((size_t)(128))
+#define CLR_SIZE ((size_t)(4))
 #else //SERVER_GC
-#define CLR_SIZE ((size_t)(128))
+#define CLR_SIZE ((size_t)(4))
 #endif //SERVER_GC
 
 #define END_SPACE_AFTER_GC (LARGE_OBJECT_SIZE + MAX_STRUCTALIGN)
