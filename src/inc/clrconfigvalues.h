@@ -316,7 +316,7 @@ RETAIL_CONFIG_DWORD_INFO(UNSUPPORTED_gcConcurrent, W("gcConcurrent"), (DWORD)-1,
 #ifdef FEATURE_CONSERVATIVE_GC
 RETAIL_CONFIG_DWORD_INFO(UNSUPPORTED_gcConservative, W("gcConservative"), 0, "Enables/Disables conservative GC")
 #endif
-RETAIL_CONFIG_DWORD_INFO(UNSUPPORTED_gcServer, W("gcServer"), 0, "Enables server GC")
+RETAIL_CONFIG_DWORD_INFO(UNSUPPORTED_gcServer, W("gcServer"), 1, "Enables server GC")
 CONFIG_STRING_INFO(INTERNAL_GcCoverage, W("GcCoverage"), "specify a method or regular expression of method names to run with GCStress")
 CONFIG_STRING_INFO(INTERNAL_SkipGCCoverage, W("SkipGcCoverage"), "specify a list of assembly names to skip with GC Coverage")
 RETAIL_CONFIG_DWORD_INFO_DIRECT_ACCESS(UNSUPPORTED_gcForceCompact, W("gcForceCompact"), "When set to true, always do compacting GC")
