@@ -84,7 +84,7 @@ using namespace CorUnix;
 struct PreloadedImageListNode
 {
     PreloadedImageListNode *next;
-    LPCSTR szPath;
+    LPSTR szPath;
     LPCWSTR wszPath;
     LPVOID lpMappedImage;
     SIZE_T virtualSize;
@@ -104,7 +104,8 @@ public:
     {
         // FIXME: is it correct to use PAL_malloc here without PAL being initialized?
         PreloadedImageListNode *node = (PreloadedImageListNode *) PAL_malloc(sizeof(PreloadedImageListNode));
-        node->szPath = szPath;
+        node->szPath = (LPSTR) PAL_malloc(strlen(szPath) + 1);
+        strcpy(node->szPath, szPath);
         node->wszPath = NULL;
         node->lpMappedImage = lpImage;
         node->virtualSize = size;
@@ -127,6 +128,7 @@ public:
             {
                 delete node->wszPath;
             }
+            PAL_free(node->szPath);
             PAL_free(node);
             node = nextNode;
         }
