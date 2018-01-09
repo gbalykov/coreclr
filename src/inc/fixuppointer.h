@@ -30,10 +30,8 @@ template<typename PTR_TYPE>
 class RelativePointer
 {
 public:
-
-    static constexpr bool isRelative = true;
+  static constexpr bool isRelative = true;
     typedef PTR_TYPE type;
-
 #ifndef DACCESS_COMPILE
     RelativePointer()
     {
@@ -176,11 +174,10 @@ private:
 template<typename PTR_TYPE>
 class FixupPointer
 {
+  
 public:
-
-    static constexpr bool isRelative = false;
+  static constexpr bool isRelative = false;
     typedef PTR_TYPE type;
-
     // Returns whether the encoded pointer is NULL.
     BOOL IsNull() const
     {
@@ -245,8 +242,8 @@ template<typename PTR_TYPE>
 class RelativeFixupPointer
 {
 public:
-
-    static constexpr bool isRelative = true;
+  
+  static constexpr bool isRelative = true;
     typedef PTR_TYPE type;
 
 #ifndef DACCESS_COMPILE
@@ -423,7 +420,7 @@ private:
 // Fixup used for RelativePointer
 #define IMAGE_REL_BASED_RelativePointer IMAGE_REL_BASED_RELPTR
 
-#endif // FEATURE_PREJIT
+#else // FEATURE_PREJIT
 
 //----------------------------------------------------------------------------
 // PlainPointer is simple pointer wrapper to support compilation without indirections
@@ -432,10 +429,8 @@ template<typename PTR_TYPE>
 class PlainPointer
 {
 public:
-
-    static constexpr bool isRelative = false;
+  static constexpr bool isRelative = false;
     typedef PTR_TYPE type;
-
     // Returns whether the encoded pointer is NULL.
     BOOL IsNull() const
     {
@@ -542,13 +537,11 @@ private:
     TADDR m_ptr;
 };
 
-#ifndef FEATURE_PREJIT
-
 #define FixupPointer PlainPointer
 #define RelativePointer PlainPointer
 #define RelativeFixupPointer PlainPointer
 
-#endif // !FEATURE_PREJIT
+#endif // FEATURE_PREJIT
 
 //----------------------------------------------------------------------------
 // RelativePointer32 is pointer encoded as relative 32-bit offset. It is used
@@ -558,10 +551,6 @@ template<typename PTR_TYPE>
 class RelativePointer32
 {
 public:
-
-    static constexpr bool isRelative = true;
-    typedef PTR_TYPE type;
-
     // Returns whether the encoded pointer is NULL.
     BOOL IsNull() const
     {

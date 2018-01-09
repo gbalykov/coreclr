@@ -1335,13 +1335,6 @@ BOOL DoesSlotCallPrestub(PCODE pCode)
 {
     PTR_WORD pInstr = dac_cast<PTR_WORD>(PCODEToPINSTR(pCode));
 
-#ifdef HAS_COMPACT_ENTRYPOINTS
-    if (MethodDescChunk::GetMethodDescFromCompactEntryPoint(pCode, TRUE) != NULL)
-    {
-        return TRUE;
-    }
-#endif // HAS_COMPACT_ENTRYPOINTS
-
     // FixupPrecode
     if (pInstr[0] == 0x46fc && // // mov r12, pc
         pInstr[1] == 0xf8df &&
@@ -3614,15 +3607,7 @@ PCODE DynamicHelpers::CreateDictionaryLookupHelper(LoaderAllocator * pAllocator,
         int indirectionsSize = 0;
         for (WORD i = 0; i < pLookup->indirections; i++)
         {
-            if (i == 0 && pLookup->indirectFirstOffset)
-            {
-                indirectionsSize += (pLookup->offsets[i] >= 0xFFF ? 10 : 2);
-                indirectionsSize += 4;
-            }
-            else
-            {
-                indirectionsSize += (pLookup->offsets[i] >= 0xFFF ? 10 : 4);
-            }
+            indirectionsSize += (pLookup->offsets[i] >= 0xFFF ? 10 : 4);
         }
 
         int codeSize = indirectionsSize + (pLookup->testForNull ? 26 : 2);
@@ -3638,55 +3623,23 @@ PCODE DynamicHelpers::CreateDictionaryLookupHelper(LoaderAllocator * pAllocator,
 
         for (WORD i = 0; i < pLookup->indirections; i++)
         {
-            if (i == 0 && pLookup->indirectFirstOffset)
+            if (pLookup->offsets[i] >= 0xFFF)
             {
-                if (pLookup->offsets[i] >= 0xFF)
-                {
-                    // mov r2, offset
-                    MovRegImm(p, 2, pLookup->offsets[i]);
-                    p += 8;
+                // mov r2, offset
+                MovRegImm(p, 2, pLookup->offsets[i]);
+                p += 8;
 
-                    // add r0, r2
-                    *(WORD *)p = 0x4410;
-                    p += 2;
-                }
-                else
-                {
-                    // add r0, <offset>
-                   *(WORD *)p = (WORD)((WORD)0x3000 | (WORD)((0x00FF) & pLookup->offsets[i]));
-                   p += 2;
-                }
-
-                // r0 is pointer + offset[0]
-                // ldr r2, [r0]
-                *(WORD *)p = 0x6802;
-                p += 2;
-
-                // r2 is offset1
-                // add r0, r2
-                *(WORD *)p = 0x4410;
+                // ldr r0, [r0, r2]
+                *(WORD *)p = 0x5880;
                 p += 2;
             }
             else
             {
-                if (pLookup->offsets[i] >= 0xFFF)
-                {
-                    // mov r2, offset
-                    MovRegImm(p, 2, pLookup->offsets[i]);
-                    p += 8;
-
-                    // ldr r0, [r0, r2]
-                    *(WORD *)p = 0x5880;
-                    p += 2;
-                }
-                else
-                {
-                    // ldr r0, [r0 + offset]
-                    *(WORD *)p = 0xF8D0;
-                    p += 2;
-                    *(WORD *)p = (WORD)(0xFFF & pLookup->offsets[i]);
-                    p += 2;
-                }
+                // ldr r0, [r0 + offset]
+                *(WORD *)p = 0xF8D0;
+                p += 2;
+                *(WORD *)p = (WORD)(0xFFF & pLookup->offsets[i]);
+                p += 2;
             }
         }
 

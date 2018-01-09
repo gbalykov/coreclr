@@ -5960,12 +5960,12 @@ MethodTableBuilder::InitMethodDesc(
             NDirectMethodDesc *pNewNMD = (NDirectMethodDesc*)pNewMD;
 
             // Allocate writeable data
-            pNewNMD->ndirect.m_pWriteableData.SetValue((NDirectWriteableData*)
-                AllocateFromHighFrequencyHeap(S_SIZE_T(sizeof(NDirectWriteableData))));
+            pNewNMD->ndirect.m_pWriteableData = (NDirectWriteableData*)
+                AllocateFromHighFrequencyHeap(S_SIZE_T(sizeof(NDirectWriteableData)));
 
 #ifdef HAS_NDIRECT_IMPORT_PRECODE 
-            pNewNMD->ndirect.m_pImportThunkGlue.SetValue(Precode::Allocate(PRECODE_NDIRECT_IMPORT, pNewMD,
-                GetLoaderAllocator(), GetMemTracker())->AsNDirectImportPrecode());
+            pNewNMD->ndirect.m_pImportThunkGlue = Precode::Allocate(PRECODE_NDIRECT_IMPORT, pNewMD,
+                GetLoaderAllocator(), GetMemTracker())->AsNDirectImportPrecode();
 #else // !HAS_NDIRECT_IMPORT_PRECODE
             pNewNMD->GetNDirectImportThunkGlue()->Init(pNewNMD);
 #endif // !HAS_NDIRECT_IMPORT_PRECODE
@@ -6213,7 +6213,7 @@ MethodTableBuilder::PlaceMethodImpls()
     DWORD dwMaxSlotSize = IsInterface() ? bmtMethod->dwNumberMethodImpls : bmtVT->cVirtualSlots;
 
     DWORD * slots = new (&GetThread()->m_MarshalAlloc) DWORD[dwMaxSlotSize];
-    RelativePointer<MethodDesc *> * replaced = new (&GetThread()->m_MarshalAlloc) RelativePointer<MethodDesc*>[dwMaxSlotSize];
+    MethodDesc ** replaced = new (&GetThread()->m_MarshalAlloc) MethodDesc*[dwMaxSlotSize];
 
     DWORD iEntry = 0;
     bmtMDMethod * pCurImplMethod = bmtMethodImpl->GetImplementationMethod(iEntry);
@@ -6333,7 +6333,7 @@ MethodTableBuilder::WriteMethodImplData(
     bmtMDMethod * pImplMethod, 
     DWORD         cSlots, 
     DWORD *       rgSlots, 
-    RelativePointer<MethodDesc *> * rgDeclMD)
+    MethodDesc ** rgDeclMD)
 {
     STANDARD_VM_CONTRACT;
     
@@ -6375,9 +6375,9 @@ MethodTableBuilder::WriteMethodImplData(
 
                 if (min != i)
                 {
-                    MethodDesc * mTmp = rgDeclMD[i].GetValue();
-                    rgDeclMD[i].SetValue(rgDeclMD[min].GetValue());
-                    rgDeclMD[min].SetValue(mTmp);
+                    MethodDesc * mTmp = rgDeclMD[i];
+                    rgDeclMD[i] = rgDeclMD[min];
+                    rgDeclMD[min] = mTmp;
 
                     DWORD sTmp = rgSlots[i];
                     rgSlots[i] = rgSlots[min];
@@ -6399,7 +6399,7 @@ MethodTableBuilder::PlaceLocalDeclarationOnClass(
     bmtMDMethod * pDecl, 
     bmtMDMethod * pImpl, 
     DWORD *       slots, 
-    RelativePointer<MethodDesc *> * replaced,
+    MethodDesc ** replaced,
     DWORD *       pSlotIndex,
     DWORD         dwMaxSlotSize)
 {
@@ -6458,7 +6458,7 @@ MethodTableBuilder::PlaceLocalDeclarationOnClass(
     // We implement this slot, record it
     ASSERT(*pSlotIndex < dwMaxSlotSize);
     slots[*pSlotIndex] = pDecl->GetSlotIndex();
-    replaced[*pSlotIndex].SetValue(pDecl->GetMethodDesc());
+    replaced[*pSlotIndex] = pDecl->GetMethodDesc();
 
     // increment the counter
     (*pSlotIndex)++;
@@ -6570,7 +6570,7 @@ VOID MethodTableBuilder::PlaceInterfaceDeclarationOnInterface(
     bmtMethodHandle hDecl, 
     bmtMDMethod   *pImpl, 
     DWORD *       slots, 
-    RelativePointer<MethodDesc *> * replaced,
+    MethodDesc ** replaced,
     DWORD *       pSlotIndex,
     DWORD         dwMaxSlotSize)
 {
@@ -6602,7 +6602,7 @@ VOID MethodTableBuilder::PlaceInterfaceDeclarationOnInterface(
     // We implement this slot, record it
     ASSERT(*pSlotIndex < dwMaxSlotSize);
     slots[*pSlotIndex] = hDecl.GetSlotIndex();
-    replaced[*pSlotIndex].SetValue(pDeclMD);
+    replaced[*pSlotIndex] = pDeclMD;
 
     // increment the counter
     (*pSlotIndex)++;
@@ -6614,7 +6614,7 @@ MethodTableBuilder::PlaceParentDeclarationOnClass(
     bmtRTMethod * pDecl, 
     bmtMDMethod * pImpl, 
     DWORD *       slots, 
-    RelativePointer<MethodDesc *> * replaced,
+    MethodDesc ** replaced,
     DWORD *       pSlotIndex,
     DWORD         dwMaxSlotSize)
 {
@@ -6661,7 +6661,7 @@ MethodTableBuilder::PlaceParentDeclarationOnClass(
     // We implement this slot, record it
     ASSERT(*pSlotIndex < dwMaxSlotSize);
     slots[*pSlotIndex] = pDeclMD->GetSlot();
-    replaced[*pSlotIndex].SetValue(pDeclMD);
+    replaced[*pSlotIndex] = pDeclMD;
 
     // increment the counter
     (*pSlotIndex)++;

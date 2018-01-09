@@ -63,6 +63,7 @@ EXTERN_C void DeleteFromPitchingCandidate(MethodDesc* pMD);
 EXTERN_C void MarkMethodNotPitchingCandidate(MethodDesc* pMD);
 #endif
 
+EXTERN_C void STDCALL ThePreStub();
 EXTERN_C void STDCALL ThePreStubPatch();
 
 //==========================================================================
@@ -1405,21 +1406,6 @@ Stub * MakeInstantiatingStubWorker(MethodDesc *pMD)
 }
 #endif // defined(FEATURE_SHARE_GENERIC_CODE)
 
-#if defined (HAS_COMPACT_ENTRYPOINTS) && defined (_TARGET_ARM_)
-
-extern "C" MethodDesc * STDCALL PreStubGetMethodDescForCompactEntryPoint (PCODE pCode)
-{
-    _ASSERTE (pCode >= PC_REG_RELATIVE_OFFSET);
-
-    pCode = (PCODE) (pCode - PC_REG_RELATIVE_OFFSET + THUMB_CODE);
-
-    _ASSERTE (MethodDescChunk::IsCompactEntryPointAtAddress (pCode));
-
-    return MethodDescChunk::GetMethodDescFromCompactEntryPoint(pCode, FALSE);
-}
-
-#endif // defined (HAS_COMPACT_ENTRYPOINTS) && defined (_TARGET_ARM_)
-
 //=============================================================================
 // This function generates the real code for a method and installs it into
 // the methoddesc. Usually ***BUT NOT ALWAYS***, this function runs only once
@@ -2544,9 +2530,6 @@ void ProcessDynamicDictionaryLookup(TransitionBlock *           pTransitionBlock
 
     pResult->testForFixup = pResult->testForNull = false;
     pResult->signature = NULL;
-
-    pResult->indirectFirstOffset = 0;
-
     pResult->indirections = CORINFO_USEHELPER;
 
     DWORD numGenericArgs = 0;
@@ -2597,11 +2580,6 @@ void ProcessDynamicDictionaryLookup(TransitionBlock *           pTransitionBlock
             pResult->indirections = 2;
             pResult->offsets[0] = offsetof(InstantiatedMethodDesc, m_pPerInstInfo);
 
-            if (decltype(InstantiatedMethodDesc::m_pPerInstInfo)::isRelative)
-            {
-                pResult->indirectFirstOffset = 1;
-            }
-
             ULONG data;
             IfFailThrow(sigptr.GetData(&data));
             pResult->offsets[1] = sizeof(TypeHandle) * data;
@@ -2640,11 +2618,6 @@ void ProcessDynamicDictionaryLookup(TransitionBlock *           pTransitionBlock
 
             // Indirect through dictionary table pointer in InstantiatedMethodDesc
             pResult->offsets[0] = offsetof(InstantiatedMethodDesc, m_pPerInstInfo);
-
-            if (decltype(InstantiatedMethodDesc::m_pPerInstInfo)::isRelative)
-            {
-                pResult->indirectFirstOffset = 1;
-            }
 
             *pDictionaryIndexAndSlot |= dictionarySlot;
         }
