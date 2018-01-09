@@ -269,7 +269,7 @@ namespace CorUnix
         
         PAL_ERROR palErr = NO_ERROR;
         WaitingThreadsListNode * pwtlnNewNode = NULL;
-        SharedID shridNewNode = NULL;
+        SharedID shridNewNode = NULLSharedID;
         ThreadWaitInfo * ptwiWaitInfo; 
         DWORD * pdwWaitState;
         bool fSharedObject = (SharedObject == m_odObjectDomain);
@@ -300,7 +300,7 @@ namespace CorUnix
         
         if (!pwtlnNewNode)
         {
-            if (fSharedObject && (NULL != shridNewNode))
+            if (fSharedObject && (NULLSharedID != shridNewNode))
             {
                 ASSERT("Bad Shared Memory ptr %p\n", shridNewNode);
                 palErr = ERROR_INTERNAL_ERROR;
@@ -336,7 +336,7 @@ namespace CorUnix
             }
         }
         
-        pwtlnNewNode->shridSHRThis       = NULL;
+        pwtlnNewNode->shridSHRThis       = NULLSharedID;
         pwtlnNewNode->ptwiWaitInfo       = ptwiWaitInfo;
         pwtlnNewNode->dwObjIndex         = dwIndex;
         pwtlnNewNode->dwProcessId        = gPID;
@@ -443,7 +443,7 @@ namespace CorUnix
             {
                 m_psdSynchData->Release(m_pthrOwner);
             }
-            if ((fSharedObject)  && (NULL != shridNewNode))
+            if ((fSharedObject)  && (NULLSharedID != shridNewNode))
             {
                 pSynchManager->CacheAddSharedWTListNode(m_pthrOwner, shridNewNode);
             }
@@ -782,7 +782,7 @@ namespace CorUnix
                 CPalSynchronizationManager::GetInstance();
             bool fSharedObject = (SharedObject == m_odObjectDomain);
 
-            _ASSERT_MSG((fSharedObject && (NULL == m_ptrWTLHead.shrid)) ||
+            _ASSERT_MSG((fSharedObject && (NULLSharedID == m_ptrWTLHead.shrid)) ||
                         (!fSharedObject && (NULL == m_ptrWTLHead.ptr)),
                         "Final Release on CSynchData with threads still in "
                         "the waiting list\n"); 
@@ -1083,7 +1083,7 @@ namespace CorUnix
         bool fDelegatedSignaling = false;
         DWORD * pdwWaitState;
         DWORD dwObjIdx;
-        SharedID shridItem = NULL, shridNextItem = NULL;
+        SharedID shridItem = NULLSharedID, shridNextItem = NULLSharedID;
         WaitingThreadsListNode * pwtlnItem, * pwtlnNextItem;
         DWORD dwPid = gPID;
         CPalSynchronizationManager * pSynchManager = 
@@ -1401,7 +1401,7 @@ namespace CorUnix
         bool fSharedObject = (SharedObject == GetObjectDomain());
         DWORD * pdwWaitState;
         DWORD dwObjIdx;
-        SharedID shridItem = NULL, shridNextItem = NULL;
+        SharedID shridItem = NULLSharedID, shridNextItem = NULLSharedID;
         WaitingThreadsListNode * pwtlnItem, * pwtlnNextItem;
         DWORD dwPid = gPID;
         CPalSynchronizationManager * pSynchManager = 
@@ -1926,14 +1926,14 @@ namespace CorUnix
 
             VALIDATEOBJECT(pwtlnNewNode);
 
-            pwtlnNewNode->ptrNext.shrid = NULL;
+            pwtlnNewNode->ptrNext.shrid = NULLSharedID;
             if (NULL == pwtlnCurrLast)
             {
-                _ASSERT_MSG(NULL == m_ptrWTLHead.shrid, 
+                _ASSERT_MSG(NULLSharedID == m_ptrWTLHead.shrid, 
                             "Corrupted waiting list on shared CSynchData at "
                             "{shrid=%p, p=%p}\n", m_shridThis, this);
             
-                pwtlnNewNode->ptrPrev.shrid = NULL;
+                pwtlnNewNode->ptrPrev.shrid = NULLSharedID;
                 m_ptrWTLHead.shrid = shridNewNode;
                 m_ptrWTLTail.shrid = shridNewNode;
             }
@@ -1962,14 +1962,14 @@ namespace CorUnix
 
             VALIDATEOBJECT(pwtlnNewNode);
 
-            pwtlnNewNode->ptrPrev.shrid = NULL;
+            pwtlnNewNode->ptrPrev.shrid = NULLSharedID;
             if (NULL == pwtlnCurrFirst)
             {
-                _ASSERT_MSG(NULL == m_ptrWTLTail.shrid,
+                _ASSERT_MSG(NULLSharedID == m_ptrWTLTail.shrid,
                             "Corrupted waiting list on shared CSynchData at "
                             "{shrid=%p, p=%p}\n", m_shridThis, this);
             
-                pwtlnNewNode->ptrNext.shrid = NULL;
+                pwtlnNewNode->ptrNext.shrid = NULLSharedID;
                 m_ptrWTLHead.shrid = shridNewNode;
                 m_ptrWTLTail.shrid = shridNewNode;
             }
