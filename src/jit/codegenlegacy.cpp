@@ -18993,13 +18993,9 @@ regMaskTP CodeGen::genCodeForCall(GenTreeCall* call, bool valUsed)
                     {
                         if (isRelative)
                         {
-#if defined(_TARGET_ARM_)
-                            /* Load the function address: "[vptrReg1 + vptrReg] -> reg_intret" */
-                            getEmitter()->emitIns_R_ARR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, REG_TAILCALL_ADDR, vptrReg1,
-                                                        vptrReg, 0);
-#else
-                            unreached();
-#endif
+                            getEmitter()->emitIns_R_R_R(INS_add, EA_PTRSIZE, vptrReg1, vptrReg1, vptrReg);
+                            getEmitter()->emitIns_R_AR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, vptrReg, vptrReg1, 0);
+                            getEmitter()->emitIns_R_R_R(INS_add, EA_PTRSIZE, REG_TAILCALL_ADDR, vptrReg1, vptrReg);
                         }
                         else
                         {
@@ -19013,8 +19009,9 @@ regMaskTP CodeGen::genCodeForCall(GenTreeCall* call, bool valUsed)
 #if CPU_LOAD_STORE_ARCH
                         if (isRelative)
                         {
-                            getEmitter()->emitIns_R_ARR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, vptrReg, vptrReg1, vptrReg,
-                                                        0);
+                            getEmitter()->emitIns_R_R_R(INS_add, EA_PTRSIZE, vptrReg1, vptrReg1, vptrReg);
+                            getEmitter()->emitIns_R_AR(ins_Load(TYP_I_IMPL), EA_PTRSIZE, vptrReg, vptrReg1, 0);
+                            getEmitter()->emitIns_R_R_R(INS_add, EA_PTRSIZE, vptrReg, vptrReg1, vptrReg);
                         }
                         else
                         {
@@ -19467,6 +19464,34 @@ regMaskTP CodeGen::genCodeForCall(GenTreeCall* call, bool valUsed)
 #endif
                             break;
 
+                        case IAT_RELPVALUE:
+                            //------------------------------------------------------
+                            // Non-virtual direct calls to addresses accessed by
+                            // a single relative indirection.
+                            //
+                            // For tailcalls we place the target address in REG_TAILCALL_ADDR
+                            CLANG_FORMAT_COMMENT_ANCHOR;
+
+#if CPU_LOAD_STORE_ARCH
+                            {
+                                regNumber indReg    = REG_TAILCALL_ADDR;
+                                regNumber vptrReg1  = regSet.rsGrabReg(RBM_ALLINT & ~genRegMask(indReg));
+                                regMaskTP vptrMask1 = genRegMask(vptrReg1);
+
+                                gcInfo.gcMarkRegSetNpt(vptrMask1);
+                                regTracker.rsTrackRegTrash(vptrReg1);
+
+                                instGen_Set_Reg_To_Imm(EA_HANDLE_CNS_RELOC, indReg, (ssize_t)addr);
+                                getEmitter()->emitIns_R_R(INS_mov, EA_PTRSIZE, vptrReg1, indReg);
+                                getEmitter()->emitIns_R_R_I(INS_ldr, EA_4BYTE, indReg, indReg, 0);
+                                getEmitter()->emitIns_R_R(INS_add, EA_4BYTE, indReg, vptrReg1);
+                                regTracker.rsTrackRegTrash(indReg);
+                            }
+#else
+                            unreached();
+#endif
+                            break;
+
                         default:
                             noway_assert(!"Bad accessType");
                             break;
@@ -19627,6 +19652,46 @@ regMaskTP CodeGen::genCodeForCall(GenTreeCall* call, bool valUsed)
                                                        indCallReg,   // ireg
                                                        REG_NA, 0, 0, // xreg, xmul, disp
                                                        false,        // isJump
+                                                       emitter::emitNoGChelper(helperNum));
+                        }
+                        break;
+
+                        case IAT_RELPVALUE:
+                        {
+                            //------------------------------------------------------
+                            // Non-virtual direct calls to addresses accessed by
+                            // a single relative indirection.
+                            //
+
+                            // Load the address into a register, load indirect and call  through a register
+                            CLANG_FORMAT_COMMENT_ANCHOR;
+
+                            regMaskTP indCallMask = RBM_ALLINT;
+
+                            // Grab an available register to use for the CALL indirection
+                            indCallReg = regSet.rsGrabReg(indCallMask);
+
+                            regNumber vptrReg1  = regSet.rsGrabReg(RBM_ALLINT & ~genRegMask(indCallReg));
+                            regMaskTP vptrMask1 = genRegMask(vptrReg1);
+
+                            gcInfo.gcMarkRegSetNpt(vptrMask1);
+                            regTracker.rsTrackRegTrash(vptrReg1);
+
+                            instGen_Set_Reg_To_Imm(EA_HANDLE_CNS_RELOC, indCallReg, (ssize_t)addr);
+                            getEmitter()->emitIns_R_R(INS_mov, EA_PTRSIZE, vptrReg1, indCallReg);
+                            getEmitter()->emitIns_R_R_I(INS_ldr, EA_PTRSIZE, indCallReg, indCallReg, 0);
+                            getEmitter()->emitIns_R_R(INS_add, EA_PTRSIZE, indCallReg, vptrReg1);
+                            regTracker.rsTrackRegTrash(indCallReg);
+
+                            emitCallType = emitter::EC_INDIR_R;
+                            addr         = NULL;
+
+                            getEmitter()->emitIns_Call(emitCallType, methHnd, INDEBUG_LDISASM_COMMA(sigInfo) addr, args,
+                                                       retSize, gcInfo.gcVarPtrSetCur, gcInfo.gcRegGCrefSetCur,
+                                                       gcInfo.gcRegByrefSetCur, ilOffset,
+                                                       indCallReg,   // ireg
+                                                       REG_NA, 0, 0, // xreg, xmul, disp
+                                                       false,        /* isJump */
                                                        emitter::emitNoGChelper(helperNum));
                         }
                         break;

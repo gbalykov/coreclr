@@ -1133,7 +1133,16 @@ public:
         }
     }
 
-    PTR_PCODE GetAddrOfSlot();
+    inline BOOL IsVirtualSlot()
+    {
+        return GetSlot() < GetMethodTable()->GetNumVirtuals();
+    }
+    inline BOOL IsVtableSlot()
+    {
+        return IsVirtualSlot() && !HasNonVtableSlot();
+    }
+
+    TADDR GetAddrOfSlot();
 
     PTR_MethodDesc GetDeclMethodDesc(UINT32 slotNumber);
 
