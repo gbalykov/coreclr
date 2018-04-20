@@ -2583,7 +2583,7 @@ public:
         };
 
         // The writeable part of the methoddesc.
-#if defined(PLATFORM_UNIX) && defined(_TARGET_ARM_)
+#if defined(FEATURE_NGEN_RELOCS_OPTIMIZATIONS)
         RelativePointer<PTR_NDirectWriteableData>    m_pWriteableData;
 #else
         PlainPointer<PTR_NDirectWriteableData>    m_pWriteableData;
@@ -3399,7 +3399,7 @@ public: // <TODO>make private: JITinterface.cpp accesses through this </TODO>
         //
         // For generic method definitions that are not the typical method definition (e.g. C<int>.m<U>)
         // this field is null; to obtain the instantiation use LoadMethodInstantiation
-#if defined(PLATFORM_UNIX) && defined(_TARGET_ARM_)
+#if defined(FEATURE_NGEN_RELOCS_OPTIMIZATIONS)
     RelativePointer<PTR_Dictionary> m_pPerInstInfo;  //SHARED
 #else
     PlainPointer<PTR_Dictionary> m_pPerInstInfo;  //SHARED

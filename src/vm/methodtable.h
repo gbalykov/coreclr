@@ -111,7 +111,7 @@ struct InterfaceInfo_t
 #endif
 
     // Method table of the interface
-#if defined(PLATFORM_UNIX) && defined(_TARGET_ARM_)
+#if defined(FEATURE_NGEN_RELOCS_OPTIMIZATIONS)
     RelativeFixupPointer<PTR_MethodTable> m_pMethodTable;
 #else
     FixupPointer<PTR_MethodTable> m_pMethodTable;
@@ -1667,7 +1667,7 @@ public:
     #define VTABLE_SLOTS_PER_CHUNK 8
     #define VTABLE_SLOTS_PER_CHUNK_LOG2 3
 
-#if defined(PLATFORM_UNIX) && defined(_TARGET_ARM_) && defined(FEATURE_NGEN_RELOCS_OPTIMIZATIONS)
+#if defined(FEATURE_NGEN_RELOCS_OPTIMIZATIONS)
     typedef RelativePointer<PCODE> VTableIndir2_t;
     typedef RelativePointer<DPTR(VTableIndir2_t)> VTableIndir_t;
 #else
@@ -2182,7 +2182,7 @@ public:
     // THE METHOD TABLE PARENT (SUPERCLASS/BASE CLASS)
     //
 
-#if defined(PLATFORM_UNIX) && defined(_TARGET_ARM_)
+#if defined(FEATURE_NGEN_RELOCS_OPTIMIZATIONS)
 #define PARENT_MT_FIXUP_OFFSET (-FIXUP_POINTER_INDIRECTION)
     typedef RelativeFixupPointer<PTR_MethodTable> ParentMT_t;
 #else
@@ -2214,7 +2214,7 @@ public:
     inline static PTR_VOID GetParentMethodTableOrIndirection(PTR_VOID pMT)
     {
         WRAPPER_NO_CONTRACT;
-#if defined(PLATFORM_UNIX) && defined(_TARGET_ARM_)
+#if defined(FEATURE_NGEN_RELOCS_OPTIMIZATIONS)
         PTR_MethodTable pMethodTable = dac_cast<PTR_MethodTable>(pMT);
         PTR_MethodTable pParentMT = ReadPointerMaybeNull((MethodTable*) pMethodTable, &MethodTable::m_pParentMethodTable);
         return dac_cast<PTR_VOID>(pParentMT);
@@ -3120,7 +3120,7 @@ public:
     // must have a dictionary entry. On the other hand, for instantiations shared with Dict<string,double> the opposite holds.
     //
 
-#if defined(PLATFORM_UNIX) && defined(_TARGET_ARM_)
+#if defined(FEATURE_NGEN_RELOCS_OPTIMIZATIONS)
     typedef RelativePointer<PTR_Dictionary> PerInstInfoElem_t;
     typedef RelativePointer<DPTR(PerInstInfoElem_t)> PerInstInfo_t;
 #else
@@ -4191,7 +4191,7 @@ private:
 
     RelativePointer<PTR_Module> m_pLoaderModule;    // LoaderModule. It is equal to the ZapModule in ngened images
     
-#if defined(PLATFORM_UNIX) && defined(_TARGET_ARM_)
+#if defined(FEATURE_NGEN_RELOCS_OPTIMIZATIONS)
     RelativePointer<PTR_MethodTableWriteableData> m_pWriteableData;
 #else
     PlainPointer<PTR_MethodTableWriteableData> m_pWriteableData;
@@ -4207,7 +4207,7 @@ private:
     static const TADDR UNION_MASK = 3; 
 
     union {
-#if defined(PLATFORM_UNIX) && defined(_TARGET_ARM_)
+#if defined(FEATURE_NGEN_RELOCS_OPTIMIZATIONS)
         RelativePointer<DPTR(EEClass)> m_pEEClass;
         RelativePointer<TADDR> m_pCanonMT;
 #else
@@ -4242,7 +4242,7 @@ private:
     public:
     union
     {
-#if defined(PLATFORM_UNIX) && defined(_TARGET_ARM_)
+#if defined(FEATURE_NGEN_RELOCS_OPTIMIZATIONS)
         RelativePointer<PTR_InterfaceInfo>   m_pInterfaceMap;
 #else
         PlainPointer<PTR_InterfaceInfo>   m_pInterfaceMap;
