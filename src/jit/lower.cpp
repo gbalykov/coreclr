@@ -4113,7 +4113,7 @@ GenTree* Lowering::LowerVirtualVtableCall(GenTreeCall* call)
             GenTree* offs = comp->gtNewIconNode(vtabOffsOfIndirection + vtabOffsAfterIndirection, TYP_INT);
             result = comp->gtNewOperNode(GT_ADD, TYP_I_IMPL, comp->gtNewLclvNode(lclNumTmp, result->TypeGet()), offs);
 
-            GenTree* base  = OffsetByIndexWithScale(result, tmpTree, 1);
+            GenTree* base           = OffsetByIndexWithScale(result, tmpTree, 1);
             GenTree* lclvNodeStore2 = comp->gtNewTempAssign(lclNumTmp2, base);
 
             LIR::Range range = LIR::SeqTree(comp, lclvNodeStore);

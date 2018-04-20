@@ -7966,7 +7966,7 @@ void Compiler::fgMorphTailCall(GenTreeCall* call, void* pfnCopyArgs)
         add = gtNewOperNode(GT_ADD, TYP_I_IMPL, vtbl, gtNewIconNode(vtabOffsAfterIndirection, TYP_I_IMPL));
 
         GenTree* indOffTree = impCloneExpr(add, &add, NO_CLASS_HANDLE, (unsigned)CHECK_SPILL_ALL,
-                                  nullptr DEBUGARG("virtual table call 2"));
+                                           nullptr DEBUGARG("virtual table call 2"));
         vtbl = gtNewOperNode(GT_IND, TYP_I_IMPL, add);
         vtbl = gtNewOperNode(GT_ADD, TYP_I_IMPL, vtbl, indOffTree);
 
@@ -7985,7 +7985,7 @@ void Compiler::fgMorphTailCall(GenTreeCall* call, void* pfnCopyArgs)
     GenTree* arg = new (this, GT_NOP) GenTreeOp(GT_NOP, TYP_I_IMPL);
     codeGen->genMarkTreeInReg(arg, REG_TAILCALL_ADDR);
 #else  // !LEGACY_BACKEND
-    GenTree* arg = gtNewIconNode(0, TYP_I_IMPL);
+    GenTree* arg         = gtNewIconNode(0, TYP_I_IMPL);
 #endif // !LEGACY_BACKEND
     call->gtCallArgs = gtNewListNode(arg, call->gtCallArgs);
 
